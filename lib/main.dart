@@ -6,7 +6,7 @@ import 'package:bocagoi/utils/strings.dart';
 
 void main() {
   var database = Database();
-  database.Clean();
+  database.clean();
 
   print('-------------------- Running App --------------------');
   runApp(MyApp(database: database,));

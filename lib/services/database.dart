@@ -5,11 +5,11 @@ import 'package:bocagoi/utils/extensions.dart';
 import 'package:localstorage/localstorage.dart';
 
 abstract class IDatabase {
-  Future<HashMap<int, Book>> GetBooks();
+  Future<HashMap<int, Book>> getBooks();
 
-  Future Save();
+  Future save();
 
-  Future Clean();
+  Future clean();
 }
 
 class Database extends IDatabase {
@@ -18,7 +18,7 @@ class Database extends IDatabase {
   HashMap<int, Book> _books;
   String _booksKey = "Books";
 
-  Future<HashMap<int, Book>> GetBooks() async {
+  Future<HashMap<int, Book>> getBooks() async {
     print("GetBooks: Start");
     await _storage.ready;
     print("GetBooks: Storage Ready");
@@ -40,13 +40,13 @@ class Database extends IDatabase {
     return _books;
   }
 
-  Future Save() async {
+  Future save() async {
     await _storage.ready;
 
     _storage.setItem(_booksKey, _books.Stringify());
   }
 
-  Future Clean() async {
+  Future clean() async {
     await _storage.ready;
 
     _storage.deleteItem(_booksKey);

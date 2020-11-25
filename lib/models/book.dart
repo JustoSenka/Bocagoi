@@ -1,7 +1,7 @@
 import 'package:bocagoi/models/master_word.dart';
 
 class Book {
-  Book({this.id, this.name, this.description/*, this.words*/});
+  Book({this.id, this.name, this.description, this.words});
 
   int id;
   String name;

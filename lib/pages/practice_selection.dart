@@ -23,7 +23,7 @@ class _PracticeSelectionPageState extends State<PracticeSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.AppTitle),
+        title: Text("Practice".tr()),
       ),
       body: Container(
         child: Form(

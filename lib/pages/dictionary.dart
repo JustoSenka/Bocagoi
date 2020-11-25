@@ -1,6 +1,8 @@
 import 'dart:collection';
 
 import 'package:bocagoi/models/book.dart';
+import 'package:bocagoi/pages/edit_book.dart';
+import 'package:bocagoi/pages/show_book.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,7 +11,7 @@ import 'package:bocagoi/utils/extensions.dart';
 
 class DictionaryPage extends StatefulWidget {
   DictionaryPage({@required this.database, Key key}) : super(key: key) {
-    books = database.GetBooks();
+    books = database.getBooks();
   }
 
   final IDatabase database;
@@ -24,7 +26,7 @@ class _DictionaryPageState extends State<DictionaryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.AppTitle),
+        title: Text("Dictionary".tr()),
       ),
       body: FutureBuilder(
         future: widget.books,
@@ -36,7 +38,7 @@ class _DictionaryPageState extends State<DictionaryPage> {
             );
           } else if (books.data.isEmpty) {
             return Center(
-              child: Text("There are no books created."),
+              child: Text("There are no books created.".tr()),
             );
           } else {
             return buildBooksList(books.data);
@@ -45,7 +47,7 @@ class _DictionaryPageState extends State<DictionaryPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: addNewBook,
-        tooltip: 'Add Book',
+        tooltip: "Add Book".tr(),
         child: Icon(Icons.add),
       ),
     );
@@ -54,22 +56,51 @@ class _DictionaryPageState extends State<DictionaryPage> {
   Widget buildBooksList(HashMap<int, Book> books) {
     return ListView(
       children: books.entries
-          .map((e) => ListTile(
-                title: Text(e.value.name),
-              ))
+          .map(
+            (e) => ListTile(
+              title: Text(e.value.name),
+              onTap: () => showBookPage(e.value),
+              onLongPress: () => editBookPage(e.value),
+            ),
+          )
           .toList(),
     );
+  }
+
+  void showBookPage(Book book) {
+    print("Navigating to show book page: ${book.id}");
+
+    Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (ctx) => ShowBookPage(
+              database: widget.database,
+              book: book,
+            )));
+  }
+
+  void editBookPage(Book book) {
+    print("Navigating to edit book page: ${book.id}");
+
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(
+            builder: (ctx) => EditBookPage(
+                  database: widget.database,
+                  book: book,
+                )))
+        .then((value) => setState(() {}));
   }
 
   void addNewBook() {
     widget.books.then((books) {
       setState(() {
         var newId = books.getNextFreeKey();
-        var book =
-            Book(id: newId, name: "New Book", description: "Description");
+        var book = Book(
+          id: newId,
+          name: "New Book".tr(),
+          description: "Description".tr(),
+        );
 
         books[newId] = book;
-        widget.database.Save();
+        widget.database.save();
       });
     });
   }
