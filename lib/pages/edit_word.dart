@@ -1,37 +1,36 @@
-
-import 'package:bocagoi/models/book.dart';
+import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
 
 class EditWordPage extends StatefulWidget {
-  EditWordPage({@required this.database, @required this.book, Key key})
+  EditWordPage({@required this.database, @required this.word, Key key})
       : super(key: key);
 
   final IDatabase database;
-  final Book book;
+  final Word word;
 
   @override
-  _EditWordPageState createState() => _EditWordPageState(book);
+  _EditWordPageState createState() => _EditWordPageState(word);
 }
 
 class _EditWordPageState extends State<EditWordPage> {
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
 
-  _EditWordPageState(Book book){
-    _name = book.name;
-    _description = book.description;
+  _EditWordPageState(Word word) {
+    _isWordPersisted = word.id != null;
+    _dummyWord = Word.from(word);
   }
 
-  String _name;
-  String _description;
+  Word _dummyWord;
+  bool _isWordPersisted;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Edit Book".tr()),
+        title: Text(_isWordPersisted ? "Edit Word".tr() : "Add Word".tr()),
       ),
       body: Form(
         key: _formKey,
@@ -42,11 +41,35 @@ class _EditWordPageState extends State<EditWordPage> {
               padding: EdgeInsets.all(10),
               child: ListView(
                 children: [
-                  Text("Editing book with id: ".tr() +
-                      widget.book.id.toString()),
-                  buildBookNameInput(),
-                  buildBookDescriptionInput(),
-                  buildButtonRow(),
+                  buildTopText(),
+                  RoundedTextFormField(
+                    labelText: "Text".tr(),
+                    initialValue: _dummyWord.text,
+                    onChanged: (val) => _dummyWord.text = val,
+                    validator: (value) => notEmptyFormValidator(
+                        "Word cannot be empty".tr(), value),
+                  ),
+                  RoundedTextFormField(
+                    labelText: "Article".tr(),
+                    initialValue: _dummyWord.article,
+                    onChanged: (val) => _dummyWord.article = val,
+                  ),
+                  RoundedTextFormField(
+                    labelText: "Pronunciation".tr(),
+                    initialValue: _dummyWord.pronunciation,
+                    onChanged: (val) => _dummyWord.pronunciation = val,
+                  ),
+                  RoundedTextFormField(
+                    labelText: "Alternate Spelling".tr(),
+                    initialValue: _dummyWord.alternateSpelling,
+                    onChanged: (val) => _dummyWord.alternateSpelling = val,
+                  ),
+                  RoundedTextFormField(
+                    labelText: "Description".tr(),
+                    initialValue: _dummyWord.description,
+                    onChanged: (val) => _dummyWord.description = val,
+                    maxLines: 5,
+                  )
                 ],
               ),
             ),
@@ -56,35 +79,12 @@ class _EditWordPageState extends State<EditWordPage> {
     );
   }
 
-  Padding buildBookNameInput() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
-      child: TextFormField(
-        validator: (value) =>
-        value == "" ? "Book name cannot be empty.".tr() : null,
-        initialValue: widget.book.name,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-          labelText: "Book name".tr(),
-        ),
-        onChanged: (value) => _name = value,
-      ),
-    );
-  }
+  Text buildTopText() {
+    var str = _isWordPersisted
+        ? "Editing word with id: ".tr() + widget.word.id.toString()
+        : "Creating new word".tr();
 
-  Padding buildBookDescriptionInput() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
-      child: TextFormField(
-        initialValue: widget.book.description,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-          labelText: "Book description".tr(),
-        ),
-        maxLines: 5,
-        onChanged: (value) => _description = value,
-      ),
-    );
+    return Text(str);
   }
 
   Row buildButtonRow() {
@@ -96,7 +96,7 @@ class _EditWordPageState extends State<EditWordPage> {
           fontSize: FontSize.small,
           onPressed: () {
             widget.database.getBooks().then((books) {
-              books.remove(widget.book.id);
+              //books.remove(widget.book.id);
               widget.database.save();
               Navigator.of(context).pop();
             });
@@ -115,8 +115,8 @@ class _EditWordPageState extends State<EditWordPage> {
           onPressed: () {
             if (_formKey.currentState.validate()) {
               setState(() {
-                widget.book.name = _name;
-                widget.book.description = _description;
+                //widget.book.name = _name;
+                //widget.book.description = _description;
               });
 
               widget.database.getBooks().then((books) {
@@ -129,5 +129,9 @@ class _EditWordPageState extends State<EditWordPage> {
         ),
       ],
     );
+  }
+
+  String notEmptyFormValidator(String msg, String value) {
+    return value == "" ? msg : "";
   }
 }

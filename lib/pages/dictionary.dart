@@ -5,6 +5,7 @@ import 'package:bocagoi/pages/edit_book.dart';
 import 'package:bocagoi/pages/show_book.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bocagoi/utils/extensions.dart';
@@ -57,10 +58,19 @@ class _DictionaryPageState extends State<DictionaryPage> {
     return ListView(
       children: books.entries
           .map(
-            (e) => ListTile(
-              title: Text(e.value.name),
-              onTap: () => showBookPage(e.value),
-              onLongPress: () => editBookPage(e.value),
+            (e) => Padding(
+              padding: EdgeInsets.all(5),
+              child: ListTile(
+                title: Column(
+                  children: [
+                    PrimaryText(e.value.name),
+                    SecondaryText("Words count: ".tr() +
+                        e.value.words?.length.toString()),
+                  ],
+                ),
+                onTap: () => showBookPage(e.value),
+                onLongPress: () => editBookPage(e.value),
+              ),
             ),
           )
           .toList(),
@@ -77,6 +87,8 @@ class _DictionaryPageState extends State<DictionaryPage> {
             )));
   }
 
+  void addNewBook() => editBookPage(Book());
+
   void editBookPage(Book book) {
     print("Navigating to edit book page: ${book.id}");
 
@@ -87,21 +99,5 @@ class _DictionaryPageState extends State<DictionaryPage> {
                   book: book,
                 )))
         .then((value) => setState(() {}));
-  }
-
-  void addNewBook() {
-    widget.books.then((books) {
-      setState(() {
-        var newId = books.getNextFreeKey();
-        var book = Book(
-          id: newId,
-          name: "New Book".tr(),
-          description: "Description".tr(),
-        );
-
-        books[newId] = book;
-        widget.database.save();
-      });
-    });
   }
 }

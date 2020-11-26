@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/utils/extensions.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
 
@@ -20,11 +21,13 @@ class EditBookPage extends StatefulWidget {
 class _EditBookPageState extends State<EditBookPage> {
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
 
-  _EditBookPageState(Book book){
+  _EditBookPageState(Book book) {
+    _isBookPersisted = book.id != null;
     _name = book.name;
     _description = book.description;
   }
 
+  bool _isBookPersisted;
   String _name;
   String _description;
 
@@ -32,7 +35,7 @@ class _EditBookPageState extends State<EditBookPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Edit Book".tr()),
+        title: Text(_isBookPersisted ? "Edit Book".tr() : "Add Book".tr()),
       ),
       body: Form(
         key: _formKey,
@@ -43,8 +46,7 @@ class _EditBookPageState extends State<EditBookPage> {
               padding: EdgeInsets.all(10),
               child: ListView(
                 children: [
-                  Text("Editing book with id: ".tr() +
-                      widget.book.id.toString()),
+                  buildTopText(),
                   buildBookNameInput(),
                   buildBookDescriptionInput(),
                   buildButtonRow(),
@@ -55,6 +57,14 @@ class _EditBookPageState extends State<EditBookPage> {
         ),
       ),
     );
+  }
+
+  Text buildTopText() {
+    var str = _isBookPersisted
+        ? "Editing book with id: ".tr() + widget.book.id.toString()
+        : "Creating new book".tr();
+
+    return Text(str);
   }
 
   Padding buildBookNameInput() {
@@ -89,46 +99,56 @@ class _EditBookPageState extends State<EditBookPage> {
   }
 
   Row buildButtonRow() {
-    return Row(
-      children: [
-        RoundedButton(
-          text: "Delete".tr(),
-          color: BootstrapColors.danger,
-          fontSize: FontSize.small,
-          onPressed: () {
-            widget.database.getBooks().then((books) {
-              books.remove(widget.book.id);
-              widget.database.save();
-              Navigator.of(context).pop();
-            });
-          },
-        ),
-        Spacer(),
-        RoundedButton(
-          text: "Cancel".tr(),
-          color: BootstrapColors.dark,
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        RoundedButton(
-          text: "Save".tr(),
-          color: BootstrapColors.primary,
-          fontSize: FontSize.big,
-          onPressed: () {
-            if (_formKey.currentState.validate()) {
-              setState(() {
-                widget.book.name = _name;
-                widget.book.description = _description;
+    if (_isBookPersisted) {
+      return Row(
+        children: [
+          DeleteButton(
+            onPressed: () {
+              widget.database.getBooks().then((books) {
+                books.remove(widget.book.id);
+                widget.database.save();
+                Navigator.of(context).pop();
               });
+            },
+          ),
+          Spacer(),
+          CancelButton(),
+          SaveButton(
+            formKey: _formKey,
+            onPressed: () {
+              widget.book.name = _name;
+              widget.book.description = _description;
 
               widget.database.getBooks().then((books) {
                 // books[widget.book.id] = widget.book;
                 widget.database.save();
                 Navigator.of(context).pop();
               });
-            }
-          },
-        ),
-      ],
-    );
+            },
+          ),
+        ],
+      );
+    } else {
+      return Row(
+        children: [
+          Spacer(),
+          CancelButton(),
+          SaveButton(
+            formKey: _formKey,
+            onPressed: () {
+              widget.database.getBooks().then((books) {
+                widget.book.id = books.getNextFreeKey();
+                widget.book.name = _name;
+                widget.book.description = _description;
+
+                books[widget.book.id] = widget.book;
+                widget.database.save();
+                Navigator.of(context).pop();
+              });
+            },
+          ),
+        ],
+      );
+    }
   }
 }

@@ -1,4 +1,6 @@
 import 'package:bocagoi/models/book.dart';
+import 'package:bocagoi/models/word.dart';
+import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +53,14 @@ class _ShowBookPageState extends State<ShowBookPage> {
   }
 
   void addNewWord() {
+    print("Navigating to edit word page: ");
 
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(
+        builder: (ctx) => EditWordPage(
+          database: widget.database,
+          word: Word(),
+        )))
+        .then((value) => setState(() {}));
   }
 }

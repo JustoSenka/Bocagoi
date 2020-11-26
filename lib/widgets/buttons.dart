@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bocagoi/utils/strings.dart';
 
 class BootstrapColors {
   static const Color primary = Color(0xff007bff);
@@ -54,6 +55,130 @@ class RoundedButton extends StatelessWidget {
               style: TextStyle(fontSize: fontSize.units, color: Colors.white)),
           onPressed: onPressed,
         ),
+      ),
+    );
+  }
+}
+
+class DeleteButton extends StatelessWidget {
+  DeleteButton({this.onPressed, Key key}) : super(key: key);
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return RoundedButton(
+      text: "Delete".tr(),
+      color: BootstrapColors.danger,
+      fontSize: FontSize.small,
+      onPressed: () {
+        if (onPressed != null) onPressed();
+      },
+    );
+  }
+}
+
+class CancelButton extends StatelessWidget {
+  CancelButton({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return RoundedButton(
+      text: "Cancel".tr(),
+      color: BootstrapColors.dark,
+      onPressed: () => Navigator.of(context).pop(),
+    );
+  }
+}
+
+class SaveButton extends StatelessWidget {
+  SaveButton({this.onPressed, this.formKey, Key key}) : super(key: key);
+
+  final VoidCallback onPressed;
+  final GlobalKey<FormState> formKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return RoundedButton(
+      text: "Save".tr(),
+      color: BootstrapColors.primary,
+      fontSize: FontSize.big,
+      onPressed: () {
+        if (onPressed != null &&
+            (formKey == null || formKey.currentState.validate())) {
+          onPressed();
+        }
+      },
+    );
+  }
+}
+
+class PrimaryText extends StatelessWidget {
+  PrimaryText(this.text, {Key key}) : super(key: key);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: FontSize.medium.units,
+      ),
+    );
+  }
+}
+
+class SecondaryText extends StatelessWidget {
+  SecondaryText(this.text, {Key key}) : super(key: key);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: FontSize.xsmall.units,
+        color: BootstrapColors.secondary,
+      ),
+    );
+  }
+}
+
+class RoundedTextFormField extends StatelessWidget {
+  RoundedTextFormField(
+      {this.initialValue,
+      this.labelText,
+      this.maxLines = 1,
+      this.onChanged,
+      this.validator,
+      Key key})
+      : super(key: key);
+
+  final String initialValue;
+  final String labelText;
+  final int maxLines;
+  final void Function(String) onChanged;
+  final String Function(String) validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+      child: TextFormField(
+        initialValue: initialValue,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+          labelText: labelText,
+        ),
+        maxLines: maxLines,
+        onChanged: (value) {
+          if (onChanged != null) onChanged(value);
+        },
+        validator: (value) {
+          return validator != null ? validator(value) : null;
+        },
       ),
     );
   }
