@@ -1,20 +1,48 @@
+import 'package:bocagoi/services/analytics.dart';
+import 'package:bocagoi/services/authentication.dart';
 import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/user_prefs.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bocagoi/pages/home.dart';
 import 'package:bocagoi/utils/strings.dart';
 
-void main() {
-  var database = Database();
-  database.clean();
-
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   print('-------------------- Running App --------------------');
-  runApp(MyApp(database: database,));
+
+  final app = await Firebase.initializeApp();
+  print("Firebase app initialize: " + app.name);
+
+  final analytics = Analytics(FirebaseAnalytics());
+  analytics.logAppOpen();
+
+  final auth = Auth();
+  unawaited(() => auth.signIn("glodjus@gmail.com", "somepass").then((user) {
+        print("User connected: " + user.email);
+      }));
+
+  unawaited(
+      () => FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true));
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+
+  var database = Database();
+  var prefs = UserPrefs();
+
+  Dependencies.add<IAnalytics, Analytics>(analytics);
+  Dependencies.add<IDatabase, Database>(database);
+  Dependencies.add<IUserPrefs, UserPrefs>(prefs);
+  Dependencies.add<IAuth, Auth>(auth);
+  Dependencies.printDebug();
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({@required this.database}) {}
-  final IDatabase database;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +52,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomePage(database: database),
+      home: HomePage(),
     );
   }
+}
+
+void unawaited(Function func) {
+  func();
 }

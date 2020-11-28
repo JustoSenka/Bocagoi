@@ -1,75 +1,70 @@
 import 'dart:collection';
 
-import 'package:bocagoi/models/book.dart';
-import 'package:bocagoi/pages/edit_book.dart';
-import 'package:bocagoi/pages/show_book.dart';
+import 'package:bocagoi/models/word.dart';
+import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bocagoi/utils/extensions.dart';
 
 class DictionaryPage extends StatefulWidget {
-  DictionaryPage({@required this.database, Key key}) : super(key: key) {
-    books = database.getBooks();
+  DictionaryPage({Key key}) : super(key: key) {
+    print("Dictionary: Constructor of Widget");
   }
 
-  final IDatabase database;
-  Future<HashMap<int, Book>> books;
-
   @override
-  _DictionaryPageState createState() => _DictionaryPageState();
+  _DictionaryPageState createState() {
+    print("Dictionary: Creating new state");
+    return _DictionaryPageState();
+  }
 }
 
 class _DictionaryPageState extends State<DictionaryPage> {
+  final IDatabase database;
+
+  Future<HashMap<int, Word>> words;
+  Future<HashMap<int, Word>> masterWords;
+
+  _DictionaryPageState() : database = Dependencies.get<IDatabase>() {
+    words = database.words.getAll();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Dictionary".tr()),
       ),
-      body: FutureBuilder(
-        future: widget.books,
-        builder:
-            (BuildContext context, AsyncSnapshot<HashMap<int, Book>> books) {
-          if (!books.hasData) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (books.data.isEmpty) {
-            return Center(
-              child: Text("There are no books created.".tr()),
-            );
-          } else {
-            return buildBooksList(books.data);
-          }
-        },
+      body: LoadingListPageWithProgressIndicator(
+        future: words,
+        body: buildWordList,
+        isDataEmpty: (snapshot) => snapshot.data.isEmpty,
+        textIfNoData: "There are no words created.".tr(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: addNewBook,
-        tooltip: "Add Book".tr(),
+        onPressed: addNewWord,
+        tooltip: "Add Word".tr(),
         child: Icon(Icons.add),
       ),
     );
   }
 
-  Widget buildBooksList(HashMap<int, Book> books) {
+  Widget buildWordList(Map<int, Word> words) {
     return ListView(
-      children: books.entries
+      children: words.entries
           .map(
             (e) => Padding(
               padding: EdgeInsets.all(5),
               child: ListTile(
                 title: Column(
                   children: [
-                    PrimaryText(e.value.name),
-                    SecondaryText("Words count: ".tr() +
-                        e.value.words?.length.toString()),
+                    PrimaryText(e.value.text),
                   ],
                 ),
-                onTap: () => showBookPage(e.value),
-                onLongPress: () => editBookPage(e.value),
+                onTap: () {},
+                onLongPress: () {},
               ),
             ),
           )
@@ -77,27 +72,20 @@ class _DictionaryPageState extends State<DictionaryPage> {
     );
   }
 
-  void showBookPage(Book book) {
-    print("Navigating to show book page: ${book.id}");
+  void addNewWord() async {
+    print("Navigating to edit word page: ");
 
-    Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (ctx) => ShowBookPage(
-              database: widget.database,
-              book: book,
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (ctx) => EditWordPage(
+              word: Word(),
             )));
+
+    setStateAndUpdateWords();
   }
 
-  void addNewBook() => editBookPage(Book());
-
-  void editBookPage(Book book) {
-    print("Navigating to edit book page: ${book.id}");
-
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(
-            builder: (ctx) => EditBookPage(
-                  database: widget.database,
-                  book: book,
-                )))
-        .then((value) => setState(() {}));
+  void setStateAndUpdateWords() {
+    setState(() {
+      print("Dictionary: Setting state");
+    });
   }
 }

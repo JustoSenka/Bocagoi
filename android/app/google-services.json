@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "670785154464",
+    "firebase_url": "https://bocagoi.firebaseio.com",
+    "project_id": "bocagoi",
+    "storage_bucket": "bocagoi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670785154464:android:4ecc2d3c10ccba6afe88c5",
+        "android_client_info": {
+          "package_name": "com.bocagoi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670785154464-di3nsbpqip92tqkv3cm0o2ccebkp8ed8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1sp4FVKTq66aA7mpVRNV0vJ8Mx3FAHf4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670785154464-di3nsbpqip92tqkv3cm0o2ccebkp8ed8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

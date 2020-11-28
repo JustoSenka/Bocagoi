@@ -1,17 +1,15 @@
-import 'dart:ffi';
-
 import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/strings.dart';
-import 'package:bocagoi/utils/extensions.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
+import 'package:bocagoi/utils/extensions.dart';
 
 class EditBookPage extends StatefulWidget {
-  EditBookPage({@required this.database, @required this.book, Key key})
+  EditBookPage({@required this.book, Key key})
       : super(key: key);
 
-  final IDatabase database;
   final Book book;
 
   @override
@@ -19,9 +17,11 @@ class EditBookPage extends StatefulWidget {
 }
 
 class _EditBookPageState extends State<EditBookPage> {
-  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  _EditBookPageState(Book book) {
+  final IDatabase database;
+
+  _EditBookPageState(Book book) : database = Dependencies.get<IDatabase>(){
     _isBookPersisted = book.id != null;
     _name = book.name;
     _description = book.description;
@@ -104,9 +104,7 @@ class _EditBookPageState extends State<EditBookPage> {
         children: [
           DeleteButton(
             onPressed: () {
-              widget.database.getBooks().then((books) {
-                books.remove(widget.book.id);
-                widget.database.save();
+              database.books.delete(widget.book.id).then((_) {
                 Navigator.of(context).pop();
               });
             },
@@ -118,10 +116,7 @@ class _EditBookPageState extends State<EditBookPage> {
             onPressed: () {
               widget.book.name = _name;
               widget.book.description = _description;
-
-              widget.database.getBooks().then((books) {
-                // books[widget.book.id] = widget.book;
-                widget.database.save();
+              database.books.update(widget.book).then((_) {
                 Navigator.of(context).pop();
               });
             },
@@ -136,14 +131,13 @@ class _EditBookPageState extends State<EditBookPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () {
-              widget.database.getBooks().then((books) {
-                widget.book.id = books.getNextFreeKey();
+              database.books.getAll().then((value) {
+                widget.book.id = value.getNextFreeKey();
                 widget.book.name = _name;
                 widget.book.description = _description;
-
-                books[widget.book.id] = widget.book;
-                widget.database.save();
-                Navigator.of(context).pop();
+                database.books.add(widget.book).then((value) {
+                  Navigator.of(context).pop();
+                });
               });
             },
           ),

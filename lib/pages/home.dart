@@ -1,15 +1,14 @@
 import 'package:bocagoi/pages/dictionary.dart';
+import 'package:bocagoi/pages/library.dart';
 import 'package:bocagoi/pages/practice_selection.dart';
-import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/pages/settings.dart';
 import 'package:bocagoi/utils/strings.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({@required this.database, Key key}) : super(key: key);
-
-  final IDatabase database;
+  HomePage({Key key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -36,8 +35,8 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           print('Redirecting to Practice');
-          Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (ctx) => PracticeSelectionPage()));
+          Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (ctx) => PracticeSelectionPage()));
         },
         tooltip: 'Practice Words',
         child: Icon(Icons.add),
@@ -67,8 +66,17 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               print('Redirecting to Practice');
               Navigator.of(context).pop();
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (ctx) => PracticeSelectionPage()));
+            },
+          ),
+          ListTile(
+            title: Text('Library'),
+            onTap: () {
+              print('Redirecting to Library');
+              Navigator.of(context).pop();
               Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (ctx) => PracticeSelectionPage()));
+                  MaterialPageRoute<void>(builder: (ctx) => LibraryPage()));
             },
           ),
           ListTile(
@@ -77,7 +85,7 @@ class _HomePageState extends State<HomePage> {
               print('Redirecting to Dictionary');
               Navigator.of(context).pop();
               Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (ctx) => DictionaryPage(database: widget.database,)));
+                  MaterialPageRoute<void>(builder: (ctx) => DictionaryPage()));
             },
           ),
           ListTile(
@@ -90,6 +98,8 @@ class _HomePageState extends State<HomePage> {
             title: Text('Settings'),
             onTap: () {
               Navigator.of(context).pop();
+              Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (ctx) => SettingsPage()));
             },
           ),
         ],

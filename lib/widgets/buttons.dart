@@ -14,7 +14,7 @@ class BootstrapColors {
 }
 
 class FontSize {
-  const FontSize(double this.units);
+  const FontSize(this.units);
 
   final double units;
 
@@ -48,8 +48,7 @@ class RoundedButton extends StatelessWidget {
         child: RaisedButton(
           elevation: 5.0,
           shape: RoundedRectangleBorder(
-              borderRadius:
-                  new BorderRadius.circular((fontSize.units + 10) / 4)),
+              borderRadius: BorderRadius.circular((fontSize.units + 10) / 4)),
           color: color,
           child: Text(text,
               style: TextStyle(fontSize: fontSize.units, color: Colors.white)),
@@ -153,6 +152,7 @@ class RoundedTextFormField extends StatelessWidget {
       this.maxLines = 1,
       this.onChanged,
       this.validator,
+      this.onSaved,
       Key key})
       : super(key: key);
 
@@ -160,6 +160,7 @@ class RoundedTextFormField extends StatelessWidget {
   final String labelText;
   final int maxLines;
   final void Function(String) onChanged;
+  final void Function(String) onSaved;
   final String Function(String) validator;
 
   @override
@@ -179,7 +180,116 @@ class RoundedTextFormField extends StatelessWidget {
         validator: (value) {
           return validator != null ? validator(value) : null;
         },
+        onSaved: (value) {
+          if (onSaved != null) onSaved(value);
+        },
+
       ),
+    );
+  }
+}
+
+class LoadingListPageWithProgressIndicator<T, K> extends StatelessWidget {
+  LoadingListPageWithProgressIndicator(
+      {this.body, this.future, this.isDataEmpty, this.textIfNoData, Key key})
+      : super(key: key);
+
+  final Future<Map<T, K>> future;
+  final Widget Function(Map<T, K>) body;
+  final String textIfNoData;
+  final bool Function(AsyncSnapshot<Map<T, K>> snapshot) isDataEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<Map<T, K>> books) {
+        if (!books.hasData) {
+          return Center(child: CircularProgressIndicator());
+        } else if (isDataEmpty != null && isDataEmpty(books)) {
+          return Center(child: Text(textIfNoData));
+        } else {
+          return body(books.data);
+        }
+      },
+    );
+  }
+}
+
+class LoadingPageWithProgressIndicator<T> extends StatelessWidget {
+  LoadingPageWithProgressIndicator(
+      {this.body, this.future, this.isDataEmpty, this.textIfNoData, Key key})
+      : super(key: key);
+
+  final Future<T> future;
+  final Widget Function(T) body;
+  final String textIfNoData;
+  final bool Function(AsyncSnapshot<T> snapshot) isDataEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<T> books) {
+        if (!books.hasData) {
+          return Center(child: CircularProgressIndicator());
+        } else if (isDataEmpty != null && isDataEmpty(books)) {
+          return Center(child: Text(textIfNoData));
+        } else {
+          return body(books.data);
+        }
+      },
+    );
+  }
+}
+
+/// Not complete
+class EditableListTile extends StatefulWidget {
+  EditableListTile({this.left, this.right, Key key}) : super(key: key);
+
+  final String left;
+  final String right;
+
+  @override
+  _EditableListTileState createState() => _EditableListTileState();
+}
+
+/// Not complete
+class _EditableListTileState extends State<EditableListTile> {
+  bool isBeingEdited = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: switchEditingState,
+      title: isBeingEdited ? buildEditableText() : buildNonEditableRow(),
+    );
+  }
+
+  void switchEditingState() {
+    setState(() {
+      isBeingEdited = !isBeingEdited;
+    });
+  }
+
+  Row buildNonEditableRow() {
+    return Row(
+      children: [
+        Text(
+          widget.left ?? "<empty>".tr(),
+          style: TextStyle(fontFamily: "Monospace"),
+        ),
+        Spacer(),
+        Text(widget.right ?? "<empty>".tr()),
+      ],
+    );
+  }
+
+  Widget buildEditableText() {
+    return RoundedTextFormField(
+      labelText: widget.left,
+      initialValue: widget.right ?? "",
+      onSaved: (_) => switchEditingState(),
     );
   }
 }

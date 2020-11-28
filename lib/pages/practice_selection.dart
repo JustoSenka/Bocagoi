@@ -10,7 +10,7 @@ class PracticeSelectionPage extends StatefulWidget {
 }
 
 class _PracticeSelectionPageState extends State<PracticeSelectionPage> {
-  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   String _selectedBox = "Box1";
   String _fromText = "";

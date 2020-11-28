@@ -18,6 +18,17 @@ dependencies:
   shared_preferences: '>=0.5.12+4 <2.0.0'
   cupertino_icons: ^1.0.0
 
+  # Firebase: Updated 2020 November
+  # Do not upgrade or use ^, they break backwards compat sometimes.
+  firebase_core: 0.5.2+1
+  cloud_firestore: 0.14.3+1
+
+  firebase_auth: 0.18.3+1
+  google_sign_in: 4.5.6
+
+  firebase_analytics: 6.2.0
+  firebase_crashlytics: 0.2.3+1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

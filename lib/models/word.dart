@@ -1,8 +1,8 @@
-import 'package:bocagoi/models/language.dart';
+import 'package:bocagoi/models/abstractions.dart';
 
-class Word {
+class Word implements IHaveID {
   Word({this.id, this.text, this.description, this.pronunciation,
-      this.alternateSpelling, this.article, this.language});
+      this.alternateSpelling, this.article, this.languageID});
 
   int id;
 
@@ -12,37 +12,40 @@ class Word {
   String alternateSpelling;
   String article;
 
-  Language language;
+  int languageID;
 
+  static Word fromMap(Map<String, dynamic> json) => Word.fromJson(json);
   Word.fromJson(Map<String, dynamic> json) {
     id = json["id"] as int;
     text = json["text"] as String;
-    description = json["desc"] as String;
-    pronunciation = json["pron"] as String;
-    alternateSpelling = json["alte"] as String;
-    article = json["arti"] as String;
-    language = json["lang"] as Language;
+    description = json["description"] as String;
+    pronunciation = json["pronunciation"] as String;
+    alternateSpelling = json["alternateSpelling"] as String;
+    article = json["article"] as String;
+    languageID = json["languageID"] as int;
   }
 
-  Map<String, dynamic> toJson() {
+  static Map<String, dynamic> toMap(Word word) {
     return <String, dynamic>{
-      "id": id,
-      "text": text,
-      "desc": description,
-      "pron": pronunciation,
-      "alte": alternateSpelling,
-      "arti": article,
-      "lang": language,
+      "id": word.id,
+      "text": word.text,
+      "description": word.description,
+      "pronunciation": word.pronunciation,
+      "alternateSpelling": word.alternateSpelling,
+      "article": word.article,
+      "languageID": word.languageID,
     };
   }
 
+  Map<String, dynamic> toJson() => toMap(this);
+
   Word.from(Word w){
-    // Clones don't clone the ID
+    id = w.id;
     text = w.text;
     description = w.description;
     pronunciation = w.pronunciation;
     alternateSpelling = w.alternateSpelling;
     article = w.article;
-    language = w.language;
+    languageID = w.languageID;
   }
 }

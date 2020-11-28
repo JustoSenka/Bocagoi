@@ -1,54 +1,58 @@
-import 'dart:collection';
-
 import 'package:bocagoi/models/book.dart';
-import 'package:bocagoi/utils/extensions.dart';
-import 'package:localstorage/localstorage.dart';
+import 'package:bocagoi/models/language.dart';
+import 'package:bocagoi/models/master_word.dart';
+import 'package:bocagoi/models/word.dart';
+import 'package:bocagoi/services/object_provider.dart';
 
 abstract class IDatabase {
-  Future<HashMap<int, Book>> getBooks();
+  ObjectProvider<Book> get books;
 
-  Future save();
+  ObjectProvider<Word> get words;
 
-  Future clean();
+  ObjectProvider<MasterWord> get masterWords;
+
+  ObjectProvider<Language> get languages;
 }
 
 class Database extends IDatabase {
-  LocalStorage _storage = LocalStorage("Books.json");
+  static const String _pathBooks = "books";
+  static const String _pathWords = "words";
+  static const String _pathMasterWords = "masterWords";
+  static const String _pathLanguages = "languages";
 
-  HashMap<int, Book> _books;
-  String _booksKey = "Books";
+  final ObjectProvider<Book> _Books = ObjectProvider<Book>(
+    path: _pathBooks,
+    constructor: Book.fromMap,
+    serializer: Book.toMap,
+  );
 
-  Future<HashMap<int, Book>> getBooks() async {
-    print("GetBooks: Start");
-    await _storage.ready;
-    print("GetBooks: Storage Ready");
+  final ObjectProvider<Word> _Words = ObjectProvider<Word>(
+    path: _pathWords,
+    constructor: Word.fromMap,
+    serializer: Word.toMap,
+  );
 
-    if (_books != null) {
-      print("GetBooks: Returning cached instance");
-      return _books;
-    }
+  final ObjectProvider<MasterWord> _MasterWords = ObjectProvider<MasterWord>(
+    path: _pathMasterWords,
+    constructor: MasterWord.fromMap,
+    serializer: MasterWord.toMap,
+  );
 
-    _books = _storage.getItem(_booksKey) as HashMap<int, Book>;
-    if (_books != null) {
-      print("GetBooks: Loaded from file");
-      return _books;
-    }
+  final ObjectProvider<Language> _Languages = ObjectProvider<Language>(
+    path: _pathLanguages,
+    constructor: Language.fromMap,
+    serializer: Language.toMap,
+  );
 
-    _books = HashMap<int, Book>();
-    print("GetBooks: Instantiating empty map");
+  @override
+  ObjectProvider<Book> get books => _Books;
 
-    return _books;
-  }
+  @override
+  ObjectProvider<Language> get languages => _Languages;
 
-  Future save() async {
-    await _storage.ready;
+  @override
+  ObjectProvider<MasterWord> get masterWords => _MasterWords;
 
-    _storage.setItem(_booksKey, _books.Stringify());
-  }
-
-  Future clean() async {
-    await _storage.ready;
-
-    _storage.deleteItem(_booksKey);
-  }
+  @override
+  ObjectProvider<Word> get words => _Words;
 }
