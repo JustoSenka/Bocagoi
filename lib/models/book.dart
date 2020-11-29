@@ -1,5 +1,10 @@
+import 'dart:collection';
+
 import 'package:bocagoi/models/abstractions.dart';
+import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
+import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/extensions.dart';
 
 class Book implements IHaveID {
@@ -8,9 +13,12 @@ class Book implements IHaveID {
   int id;
   String name;
   String description;
+  Set<int> masterWordsID = Set<int>();
 
-  List<int> wordsID = [];
-  List<Word> word = [];
+  Map<int, MasterWord> masterWords;
+  Future<Map<int, MasterWord>> get masterWordsFuture async {
+    return masterWords = await Dependencies.get<IDatabase>().masterWords.getMultiple(masterWordsID);
+  }
 
   // ------------
   static Book fromMap(Map<String, dynamic> json) => Book.fromJson(json);
@@ -18,7 +26,7 @@ class Book implements IHaveID {
     id = json["id"] as int;
     name = json["name"] as String;
     description = json["description"] as String;
-    wordsID = wordsID.ConvertAndReplaceWithListInt(json["wordsID"]);
+    masterWordsID = masterWordsID.ConvertAndReplaceWithListInt(json["wordsID"]);
   }
 
   static Map<String, dynamic> toMap(Book book) {
@@ -26,13 +34,13 @@ class Book implements IHaveID {
       "id": book.id,
       "name": book.name,
       "description": book.description,
-      "wordsID": book.wordsID,
+      "wordsID": book.masterWordsID,
     };
   }
 
   Map<String, dynamic> toJson() {
     var res = toMap(this);
-    res["wordsID"] = wordsID;
+    res["wordsID"] = masterWordsID;
     return res;
   }
 }

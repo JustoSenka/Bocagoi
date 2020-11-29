@@ -25,7 +25,7 @@ class _ShowBookPageState extends State<ShowBookPage> {
 
   _ShowBookPageState(this.book) : database = Dependencies.get<IDatabase>() {
     _bookHasNoWords =
-        book.wordsID == null || book.wordsID.isEmpty;
+        book.masterWordsID == null || book.masterWordsID.isEmpty;
   }
 
   bool _bookHasNoWords;
@@ -71,7 +71,7 @@ class _ShowBookPageState extends State<ShowBookPage> {
       child: PrimaryText(book.name),
     );
 
-    var wordElements = book.wordsID.map(
+    var wordElements = book.masterWordsID.map(
       (e) => ListTile(
         title: Row(
           children: [

@@ -131,14 +131,11 @@ class _EditBookPageState extends State<EditBookPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () {
-              database.books.getAll().then((value) {
-                widget.book.id = value.getNextFreeKey();
                 widget.book.name = _name;
                 widget.book.description = _description;
                 database.books.add(widget.book).then((value) {
                   Navigator.of(context).pop();
                 });
-              });
             },
           ),
         ],

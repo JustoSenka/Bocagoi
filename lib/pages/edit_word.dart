@@ -1,35 +1,49 @@
+import 'dart:collection';
+
 import 'package:bocagoi/models/book.dart';
+import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
 
 class EditWordPage extends StatefulWidget {
-  EditWordPage(
-      {@required this.word, this.book, Key key})
-      : super(key: key);
+  EditWordPage({@required this.word, this.book, Key key}) : super(key: key);
 
   final Word word;
   final Book book;
 
   @override
-  _EditWordPageState createState() => _EditWordPageState(word);
+  _EditWordPageState createState() =>
+      _EditWordPageState(wordCopy: Word.from(word));
 }
 
 class _EditWordPageState extends State<EditWordPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final IDatabase database;
+  final IPersistentDatabase persistentDatabase;
 
-  _EditWordPageState(Word word) : database = Dependencies.get<IDatabase>() {
-    _isWordPersisted = word.id != null;
-    _dummyWord = Word.from(word);
+  _EditWordPageState({@required this.wordCopy})
+      : database = Dependencies.get<IDatabase>(),
+        persistentDatabase = Dependencies.get<IPersistentDatabase>() {
+    _isWordPersisted = wordCopy.id != null;
+    loadDataFuture = loadData();
   }
 
-  Word _dummyWord;
+  Word wordCopy;
   bool _isWordPersisted;
+
+  HashMap<int, Language> languages;
+  Future<bool> loadDataFuture;
+
+  Future<bool> loadData() async {
+    languages = await database.languages.getAll();
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,48 +51,64 @@ class _EditWordPageState extends State<EditWordPage> {
       appBar: AppBar(
         title: Text(_isWordPersisted ? "Edit Word".tr() : "Add Word".tr()),
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(10),
-              child: ListView(
-                children: [
-                  buildTopText(),
-                  RoundedTextFormField(
-                    labelText: "Text".tr(),
-                    initialValue: _dummyWord.text,
-                    onChanged: (val) => _dummyWord.text = val,
-                    validator: (value) =>
-                        notEmptyFormValidator(
-                            "Word cannot be empty".tr(), value),
+      body: LoadingPageWithProgressIndicator<bool>(
+        body: buildForm,
+        future: loadDataFuture,
+      ),
+    );
+  }
+
+  Form buildForm(bool _) {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: EdgeInsets.all(10),
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(10),
+            child: ListView(
+              children: [
+                buildTopText(),
+                RoundedTextFormField(
+                  labelText: "Text".tr(),
+                  initialValue: wordCopy.text,
+                  onChanged: (val) => wordCopy.text = val,
+                  validator: (value) =>
+                      notEmptyFormValidator("Word cannot be empty".tr(), value),
+                ),
+                RoundedTextFormField(
+                  labelText: "Article".tr(),
+                  initialValue: wordCopy.article,
+                  onChanged: (val) => wordCopy.article = val,
+                ),
+                RoundedTextFormField(
+                  labelText: "Pronunciation".tr(),
+                  initialValue: wordCopy.pronunciation,
+                  onChanged: (val) => wordCopy.pronunciation = val,
+                ),
+                RoundedTextFormField(
+                  labelText: "Alternate Spelling".tr(),
+                  initialValue: wordCopy.alternateSpelling,
+                  onChanged: (val) => wordCopy.alternateSpelling = val,
+                ),
+                RoundedTextFormField(
+                  labelText: "Description".tr(),
+                  initialValue: wordCopy.description,
+                  onChanged: (val) => wordCopy.description = val,
+                  maxLines: 5,
+                ),
+                Container(
+                  child: DropdownButton<int>(
+                    value: wordCopy.languageID,
+                    items: buildDropdownItems(
+                        languages, (id) => languages[id].name),
+                    onChanged: (value) => setState(() {
+                      wordCopy.languageID = value;
+                    }),
                   ),
-                  RoundedTextFormField(
-                    labelText: "Article".tr(),
-                    initialValue: _dummyWord.article,
-                    onChanged: (val) => _dummyWord.article = val,
-                  ),
-                  RoundedTextFormField(
-                    labelText: "Pronunciation".tr(),
-                    initialValue: _dummyWord.pronunciation,
-                    onChanged: (val) => _dummyWord.pronunciation = val,
-                  ),
-                  RoundedTextFormField(
-                    labelText: "Alternate Spelling".tr(),
-                    initialValue: _dummyWord.alternateSpelling,
-                    onChanged: (val) => _dummyWord.alternateSpelling = val,
-                  ),
-                  RoundedTextFormField(
-                    labelText: "Description".tr(),
-                    initialValue: _dummyWord.description,
-                    onChanged: (val) => _dummyWord.description = val,
-                    maxLines: 5,
-                  ),
-                  buildButtonRow(),
-                ],
-              ),
+                ),
+                buildButtonRow(),
+              ],
             ),
           ),
         ),
@@ -99,29 +129,18 @@ class _EditWordPageState extends State<EditWordPage> {
       return Row(
         children: [
           DeleteButton(
-            onPressed: () {
-              /*
-              widget.database.getBooks().then((books) {
-                books..remove(widget.word.id);
-                widget.database.save();
-                Navigator.of(context).pop();
-              });*/
+            onPressed: () async {
+              await persistentDatabase.deleteWord(widget.word);
+              Navigator.of(context).pop();
             },
           ),
           Spacer(),
           CancelButton(),
           SaveButton(
             formKey: _formKey,
-            onPressed: () {
-              /*
-              widget.book.name = _name;
-              widget.book.description = _description;
-
-              widget.database.getBooks().then((books) {
-                // books[widget.book.id] = widget.book;
-                widget.database.save();
-                Navigator.of(context).pop();
-              });*/
+            onPressed: () async {
+              await persistentDatabase.updateChangesToWord(wordCopy);
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -134,21 +153,8 @@ class _EditWordPageState extends State<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-
-              await widget.book.wordsID.add(widget.book.wordsID.length);
-              await database.books.update(widget.book);
+              await persistentDatabase.addNewWord(wordCopy);
               Navigator.of(context).pop();
-
-              /*
-              widget.database.getBooks().then((books) {
-                widget.book.id = books.getNextFreeKey();
-                widget.book.name = _name;
-                widget.book.description = _description;
-
-                books[widget.book.id] = widget.book;
-                widget.database.save();
-                Navigator.of(context).pop();
-              });*/
             },
           ),
         ],

@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:bocagoi/models/language.dart';
+import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
@@ -24,11 +26,21 @@ class DictionaryPage extends StatefulWidget {
 class _DictionaryPageState extends State<DictionaryPage> {
   final IDatabase database;
 
-  Future<HashMap<int, Word>> words;
-  Future<HashMap<int, Word>> masterWords;
+  Future<bool> loadDataFuture;
+
+  HashMap<int, Word> words;
+  HashMap<int, MasterWord> masterWords;
+  HashMap<int, Language> languages;
 
   _DictionaryPageState() : database = Dependencies.get<IDatabase>() {
-    words = database.words.getAll();
+    loadDataFuture = loadData();
+  }
+
+  Future<bool> loadData() async {
+    words = await database.words.getAll();
+    languages = await database.languages.getAll();
+    masterWords = await database.masterWords.getAll();
+    return words.isEmpty;
   }
 
   @override
@@ -37,10 +49,10 @@ class _DictionaryPageState extends State<DictionaryPage> {
       appBar: AppBar(
         title: Text("Dictionary".tr()),
       ),
-      body: LoadingListPageWithProgressIndicator(
-        future: words,
+      body: LoadingPageWithProgressIndicator<bool>(
+        future: loadDataFuture,
         body: buildWordList,
-        isDataEmpty: (snapshot) => snapshot.data.isEmpty,
+        isDataEmpty: (snapshot) => snapshot.data,
         textIfNoData: "There are no words created.".tr(),
       ),
       floatingActionButton: FloatingActionButton(
@@ -51,37 +63,47 @@ class _DictionaryPageState extends State<DictionaryPage> {
     );
   }
 
-  Widget buildWordList(Map<int, Word> words) {
-    return ListView(
-      children: words.entries
-          .map(
-            (e) => Padding(
-              padding: EdgeInsets.all(5),
-              child: ListTile(
-                title: Column(
-                  children: [
-                    PrimaryText(e.value.text),
-                  ],
-                ),
-                onTap: () {},
-                onLongPress: () {},
-              ),
-            ),
-          )
-          .toList(),
+  Widget buildWordList(bool _) {
+    return Padding(
+      padding: EdgeInsets.all(5),
+      child: ListView(
+        children: [
+          Center(
+            child: Text("Number of words: ".tr() + words.length.toString()),
+          ),
+          ...buildListEntries(),
+        ],
+      ),
     );
   }
 
-  void addNewWord() async {
+  List<Padding> buildListEntries() {
+    return words.entries
+        .map(
+          (e) => Padding(
+            padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+            child: ListTile(
+              title: PrimaryText(e.value?.text ?? "<empty>".tr()),
+              onTap: () {},
+              onLongPress: () => editWord(e.value),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  void editWord(Word word) async {
     print("Navigating to edit word page: ");
 
     await Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (ctx) => EditWordPage(
-              word: Word(),
-            )));
+          word: word,
+        )));
 
     setStateAndUpdateWords();
   }
+
+  void addNewWord() async => editWord(Word());
 
   void setStateAndUpdateWords() {
     setState(() {

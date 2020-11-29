@@ -2,6 +2,7 @@ import 'package:bocagoi/services/analytics.dart';
 import 'package:bocagoi/services/authentication.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,13 +31,15 @@ void main() async {
       () => FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true));
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
-  var database = Database();
-  var prefs = UserPrefs();
+  final database = Database();
+  final prefs = UserPrefs();
+  final persistentDatabase = PersistentDatabase(database);
 
   Dependencies.add<IAnalytics, Analytics>(analytics);
   Dependencies.add<IDatabase, Database>(database);
   Dependencies.add<IUserPrefs, UserPrefs>(prefs);
   Dependencies.add<IAuth, Auth>(auth);
+  Dependencies.add<IPersistentDatabase, PersistentDatabase>(persistentDatabase);
   Dependencies.printDebug();
 
   runApp(MyApp());

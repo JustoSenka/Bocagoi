@@ -62,7 +62,7 @@ class _LibraryPageState extends State<LibraryPage> {
                   children: [
                     PrimaryText(e.value.name),
                     SecondaryText("Words count: ".tr() +
-                        e.value.wordsID?.length.toString()),
+                        e.value.masterWordsID?.length.toString()),
                   ],
                 ),
                 onTap: () => showBookPage(e.value),

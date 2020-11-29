@@ -1,4 +1,8 @@
 import 'package:bocagoi/models/abstractions.dart';
+import 'package:bocagoi/models/language.dart';
+import 'package:bocagoi/models/master_word.dart';
+import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
 
 class Word implements IHaveID {
   Word({this.id, this.text, this.description, this.pronunciation,
@@ -13,6 +17,17 @@ class Word implements IHaveID {
   String article;
 
   int languageID;
+  int masterWordID;
+
+  Language language;
+  Future<Language> get languageFuture async {
+    return language = await Dependencies.get<IDatabase>().languages.get(languageID);
+  }
+
+  MasterWord masterWord;
+  Future<MasterWord> get masterWordFuture async {
+    return masterWord = await Dependencies.get<IDatabase>().masterWords.get(masterWordID);
+  }
 
   static Word fromMap(Map<String, dynamic> json) => Word.fromJson(json);
   Word.fromJson(Map<String, dynamic> json) {
@@ -23,6 +38,7 @@ class Word implements IHaveID {
     alternateSpelling = json["alternateSpelling"] as String;
     article = json["article"] as String;
     languageID = json["languageID"] as int;
+    masterWordID = json["masterWordID"] as int;
   }
 
   static Map<String, dynamic> toMap(Word word) {
@@ -34,6 +50,7 @@ class Word implements IHaveID {
       "alternateSpelling": word.alternateSpelling,
       "article": word.article,
       "languageID": word.languageID,
+      "masterWordID": word.masterWordID,
     };
   }
 

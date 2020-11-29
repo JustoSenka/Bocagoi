@@ -1,15 +1,22 @@
-import 'dart:collection';
 import 'package:bocagoi/models/abstractions.dart';
 import 'package:bocagoi/models/word.dart';
+import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/extensions.dart';
 
 class MasterWord implements IHaveID {
+  MasterWord({this.id, this.translationsID, this.translations});
 
   int id;
-  List<int> translationsID = List<int>();
+  Set<int> translationsID = Set<int>();
 
-  /// Language ID -> Word
-  HashMap<int, Word> translations = HashMap<int, Word>();
+  // key -> languageID
+  Map<int, Word> translations;
+  Future<Map<int, Word>> get translationsFuture async {
+    final words = await Dependencies.get<IDatabase>().words.getMultiple(translationsID);
+    // Change key from wordID to languageID.
+    return translations = words.map((key, value) => MapEntry(value.languageID, value));
+  }
 
   static MasterWord fromMap(Map<String, dynamic> json) =>
       MasterWord.fromJson(json);

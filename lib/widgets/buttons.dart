@@ -1,3 +1,4 @@
+import 'package:bocagoi/models/abstractions.dart';
 import 'package:flutter/material.dart';
 import 'package:bocagoi/utils/strings.dart';
 
@@ -183,7 +184,6 @@ class RoundedTextFormField extends StatelessWidget {
         onSaved: (value) {
           if (onSaved != null) onSaved(value);
         },
-
       ),
     );
   }
@@ -290,6 +290,95 @@ class _EditableListTileState extends State<EditableListTile> {
       labelText: widget.left,
       initialValue: widget.right ?? "",
       onSaved: (_) => switchEditingState(),
+    );
+  }
+}
+
+class ListTileDropdown extends StatelessWidget {
+  ListTileDropdown(
+      {Key key,
+      this.title = "",
+      this.titleStyle,
+      this.value = 0,
+      this.map,
+      this.onChanged,
+      this.dropdownTextGetter,
+      this.addNoneSelection = false,
+      this.dropdownFlex = 1})
+      : super(key: key);
+
+  final String title;
+  final TextStyle titleStyle;
+  final int value;
+  final Map<int, IHaveID> map;
+  final void Function(int) onChanged;
+  final String Function(int) dropdownTextGetter;
+  final bool addNoneSelection;
+  final int dropdownFlex;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Row(
+        children: [
+          Text(
+            title ?? "<empty>".tr(),
+            style: titleStyle,
+          ),
+          Spacer(),
+          Expanded(
+            flex: dropdownFlex,
+            child: DropdownButton<int>(
+              value: value,
+              onChanged: onChanged,
+              items: [
+                if (addNoneSelection)
+                  DropdownMenuItem<int>(value: 0, child: Text("None".tr())),
+                ...buildDropdownItems(map, dropdownTextGetter),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<DropdownMenuItem<int>> buildDropdownItems(
+    Map<int, IHaveID> map, String Function(int) dropdownTextGetter) {
+  return map.entries.map(
+    (e) => DropdownMenuItem<int>(
+      value: e.value.id,
+      child: PrimaryText(
+        dropdownTextGetter(e.value.id),
+      ),
+    ),
+  ).toList();
+}
+
+class DoubleListTile extends StatelessWidget {
+  const DoubleListTile({
+    Key key,
+    this.left,
+    this.right,
+  }) : super(key: key);
+
+  final String left;
+  final String right;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Row(
+        children: [
+          Text(
+            left ?? "<empty>".tr(),
+            style: TextStyle(fontFamily: "Monospace"),
+          ),
+          Spacer(),
+          Text(right ?? "<empty>".tr()),
+        ],
+      ),
     );
   }
 }

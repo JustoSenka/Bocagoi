@@ -43,7 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dictionary".tr()),
+        title: Text("Settings".tr()),
       ),
       body: LoadingPageWithProgressIndicator(
         future: loadSettingsFuture,
@@ -58,13 +58,18 @@ class _SettingsPageState extends State<SettingsPage> {
       child: ListView(
         children: [
           Divider(),
-          buildListTile("User ID:".tr(), user.uid),
-          buildListTile("User Email:".tr(), user.email),
-          buildListTile("User Display Name:".tr(), user.displayName),
+          DoubleListTile(left: "User ID:".tr(), right: user.uid),
+          DoubleListTile(left: "User Email:".tr(), right: user.email),
+          DoubleListTile(
+              left: "User Display Name:".tr(), right: user.displayName),
           Divider(),
-          buildListTileDropdown(
-            left: "Primary Language".tr(),
+          ListTileDropdown(
+            title: "Primary Language".tr(),
             value: primaryLanguage?.id ?? 0,
+            dropdownTextGetter: (id) => languages[id].name,
+            map: languages,
+            dropdownFlex: 2,
+            titleStyle: TextStyle(fontFamily: "Monospace"),
             onChanged: (value) async {
               setState(() {
                 primaryLanguage = languages[value];
@@ -74,9 +79,13 @@ class _SettingsPageState extends State<SettingsPage> {
               await prefs.setPrimaryLanguageID(value);
             },
           ),
-          buildListTileDropdown(
-            left: "Foreign Language".tr(),
+          ListTileDropdown(
+            title: "Foreign Language".tr(),
             value: foreignLanguage?.id ?? 0,
+            dropdownTextGetter: (id) => languages[id].name,
+            map: languages,
+            dropdownFlex: 2,
+            titleStyle: TextStyle(fontFamily: "Monospace"),
             onChanged: (value) async {
               setState(() {
                 foreignLanguage = languages[value];
@@ -86,10 +95,14 @@ class _SettingsPageState extends State<SettingsPage> {
               await prefs.setForeignLanguageID(value);
             },
           ),
-          buildListTileDropdown(
-            left: "Secondary Language".tr(),
+          ListTileDropdown(
+            title: "Secondary Language".tr(),
             value: secondaryLanguage?.id ?? 0,
-            hasNoneSelection: true,
+            dropdownTextGetter: (id) => languages[id].name,
+            map: languages,
+            dropdownFlex: 2,
+            addNoneSelection: true,
+            titleStyle: TextStyle(fontFamily: "Monospace"),
             onChanged: (value) async {
               setState(() {
                 secondaryLanguage = languages[value];
@@ -103,62 +116,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
-  }
-
-  ListTile buildListTile(String left, String right) {
-    return ListTile(
-      title: Row(
-        children: [
-          Text(
-            left ?? "<empty>".tr(),
-            style: TextStyle(fontFamily: "Monospace"),
-          ),
-          Spacer(),
-          Text(right ?? "<empty>".tr()),
-        ],
-      ),
-    );
-  }
-
-  ListTile buildListTileDropdown(
-      {String left,
-      int value,
-      void Function(int) onChanged,
-      bool hasNoneSelection = false}) {
-    return ListTile(
-      title: Row(
-        children: [
-          Text(
-            left ?? "<empty>".tr(),
-            style: TextStyle(fontFamily: "Monospace"),
-          ),
-          Spacer(),
-          Expanded(
-            flex: 2,
-            child: DropdownButton<int>(
-              value: value,
-              items: [
-                if (hasNoneSelection)
-                  DropdownMenuItem<int>(value: 0, child: Text("None".tr())),
-                ...buildLanguageDropdownItems()
-              ],
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<DropdownMenuItem<int>> buildLanguageDropdownItems() {
-    return languages.entries
-        .map(
-          (e) => DropdownMenuItem<int>(
-            value: e.value.id,
-            child: Text(e.value.name),
-          ),
-        )
-        .toList();
   }
 
   Future<bool> loadSettings() async {
@@ -186,3 +143,4 @@ class _SettingsPageState extends State<SettingsPage> {
     return true;
   }
 }
+
