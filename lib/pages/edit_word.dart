@@ -6,6 +6,7 @@ import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
+import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
@@ -26,10 +27,12 @@ class _EditWordPageState extends State<EditWordPage> {
 
   final IDatabase database;
   final IPersistentDatabase persistentDatabase;
+  final IUserPrefs userPrefs;
 
   _EditWordPageState({@required this.wordCopy})
       : database = Dependencies.get<IDatabase>(),
-        persistentDatabase = Dependencies.get<IPersistentDatabase>() {
+        persistentDatabase = Dependencies.get<IPersistentDatabase>(),
+        userPrefs = Dependencies.get<IUserPrefs>() {
     _isWordPersisted = wordCopy.id != null;
     loadDataFuture = loadData();
   }
@@ -37,11 +40,14 @@ class _EditWordPageState extends State<EditWordPage> {
   Word wordCopy;
   bool _isWordPersisted;
 
-  HashMap<int, Language> languages;
+  Map<int, Language> languages;
+  ILoadedUserPrefs loadedUserPrefs;
   Future<bool> loadDataFuture;
 
   Future<bool> loadData() async {
     languages = await database.languages.getAll();
+    loadedUserPrefs = await userPrefs.load();
+    wordCopy.languageID ??= loadedUserPrefs.getForeignLanguageID();
     return true;
   }
 
@@ -69,6 +75,16 @@ class _EditWordPageState extends State<EditWordPage> {
             child: ListView(
               children: [
                 buildTopText(),
+                Container(
+                  child: DropdownButton<int>(
+                    value: wordCopy.languageID,
+                    items: buildDropdownItems(
+                        languages, (id) => languages[id].name),
+                    onChanged: (value) => setState(() {
+                      wordCopy.languageID = value;
+                    }),
+                  ),
+                ),
                 RoundedTextFormField(
                   labelText: "Text".tr(),
                   initialValue: wordCopy.text,
@@ -96,16 +112,6 @@ class _EditWordPageState extends State<EditWordPage> {
                   initialValue: wordCopy.description,
                   onChanged: (val) => wordCopy.description = val,
                   maxLines: 5,
-                ),
-                Container(
-                  child: DropdownButton<int>(
-                    value: wordCopy.languageID,
-                    items: buildDropdownItems(
-                        languages, (id) => languages[id].name),
-                    onChanged: (value) => setState(() {
-                      wordCopy.languageID = value;
-                    }),
-                  ),
                 ),
                 buildButtonRow(),
               ],
@@ -153,7 +159,7 @@ class _EditWordPageState extends State<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-              await persistentDatabase.addNewWord(wordCopy);
+              await persistentDatabase.addNewWord(wordCopy, book: widget.book);
               Navigator.of(context).pop();
             },
           ),

@@ -5,17 +5,21 @@ import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/extensions.dart';
 
 class MasterWord implements IHaveID {
-  MasterWord({this.id, this.translationsID, this.translations});
+  MasterWord({this.id, Set<int> translationsID})
+      : translationsID = translationsID ?? Set<int>();
 
   int id;
-  Set<int> translationsID = Set<int>();
+  Set<int> translationsID;
 
   // key -> languageID
   Map<int, Word> translations;
+
   Future<Map<int, Word>> get translationsFuture async {
-    final words = await Dependencies.get<IDatabase>().words.getMultiple(translationsID);
+    final words =
+        await Dependencies.get<IDatabase>().words.getMany(translationsID.toList());
     // Change key from wordID to languageID.
-    return translations = words.map((key, value) => MapEntry(value.languageID, value));
+    return translations =
+        words.map((key, value) => MapEntry(value.languageID, value));
   }
 
   static MasterWord fromMap(Map<String, dynamic> json) =>
@@ -23,16 +27,17 @@ class MasterWord implements IHaveID {
 
   MasterWord.fromJson(Map<String, dynamic> json) {
     id = json["id"] as int;
-    translationsID = translationsID.ConvertAndReplaceWithListInt(json["translationsID"]);
+    translationsID =
+        translationsID.ConvertAndReplaceWithListInt(json["translationsID"]);
   }
 
   static Map<String, dynamic> toMap(MasterWord masterWord) =>
-      <String, dynamic>{"id": masterWord.id};
+      masterWord.toJson();
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       "id": id,
-      "translationsID": translationsID,
+      "translationsID": translationsID.toList(growable: false),
     };
   }
 }

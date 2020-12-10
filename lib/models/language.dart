@@ -1,6 +1,8 @@
 import 'package:bocagoi/models/abstractions.dart';
 
 class Language implements IHaveID {
+  Language({this.id, this.name});
+
   int id;
   String name;
 

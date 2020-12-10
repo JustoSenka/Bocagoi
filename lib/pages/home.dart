@@ -1,3 +1,4 @@
+import 'package:bocagoi/pages/dev.dart';
 import 'package:bocagoi/pages/dictionary.dart';
 import 'package:bocagoi/pages/library.dart';
 import 'package:bocagoi/pages/practice_selection.dart';
@@ -100,6 +101,14 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pop();
               Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (ctx) => SettingsPage()));
+            },
+          ),
+          ListTile(
+            title: Text('Dev Tools'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (ctx) => DevPage()));
             },
           ),
         ],

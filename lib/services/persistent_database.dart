@@ -1,8 +1,10 @@
+import 'dart:collection';
+
 import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
-import 'package:flutter/material.dart';
+import 'package:bocagoi/utils/extensions.dart';
 
 /// An abstraction layer on IDatabase.
 /// It's purpose is to add/modify data in persistent manner.
@@ -11,11 +13,16 @@ import 'package:flutter/material.dart';
 /// Some operations might be illegal as well if persistence does not allow it.
 /// While IDatabase will forcefully delete/create everything what's requested.
 abstract class IPersistentDatabase {
+  Future<bool> addMultipleNewTranslations(List<Word> words, {Book book});
+
   Future addNewWord(Word word, {Book book});
 
   Future deleteWord(Word word);
 
   Future updateChangesToWord(Word word);
+
+  Future<Map<int, Map<int, Word>>> loadAndGroupWords(
+      Book book, Set<int> languageIDs);
 }
 
 class PersistentDatabase extends IPersistentDatabase {
@@ -26,7 +33,41 @@ class PersistentDatabase extends IPersistentDatabase {
   /// Creates new master.
   /// Creates new word and links to master.
   /// Add master to book if provided.
-  Future addNewWord(Word word, {Book book}) async {
+  Future<bool> addMultipleNewTranslations(List<Word> words, {Book book}) async {
+    final langsSet = words.map((e) => e.languageID).toSet();
+    if (langsSet.length != words.length) {
+      throw Exception(
+          "Cannot add multiple translations to same master word if some have the same language id");
+    }
+
+    final master = MasterWord();
+    master.id = await database.masterWords.getNextFreeID();
+
+    var ids = await database.words.getNextFreeIDs(words.length);
+    words.zip(ids).forEach((e) {
+      e.item1.id = e.item2;
+      e.item1.masterWordID = master.id;
+    });
+
+    master.translationsID.addAll(ids);
+
+    database.batch();
+    await database.masterWords.add(master);
+    await Future.wait(words.map((e) async => await database.words.add(e)));
+    await database.commit();
+
+    if (book != null) {
+      book.masterWordsID.add(master.id);
+      await database.books.update(book);
+    }
+
+    return true;
+  }
+
+  /// Creates new master.
+  /// Creates new word and links to master.
+  /// Add master to book if provided.
+  Future<bool> addNewWord(Word word, {Book book}) async {
     final master = MasterWord();
     master.id = await database.masterWords.getNextFreeID();
     word.id = await database.words.getNextFreeID();
@@ -34,13 +75,17 @@ class PersistentDatabase extends IPersistentDatabase {
     master.translationsID.add(word.id);
     word.masterWordID = master.id;
 
+    database.batch();
     await database.masterWords.add(master);
     await database.words.add(word);
+    await database.commit();
 
     if (book != null) {
       book.masterWordsID.add(master.id);
       await database.books.update(book);
     }
+
+    return true;
   }
 
   /// Deletes word.
@@ -50,6 +95,7 @@ class PersistentDatabase extends IPersistentDatabase {
   Future deleteWord(Word word) async {
     await database.words.delete(word.id);
 
+    database.batch();
     final master = await word.masterWordFuture;
     master.translationsID.remove(word.id);
     if (master.translationsID.isEmpty) {
@@ -57,26 +103,29 @@ class PersistentDatabase extends IPersistentDatabase {
     }
 
     // This would benefit from batching commands
-    // Also not sure if the forEach will wait for asyncs to be completed.
     final books = await database.books.getAll();
-    books.forEach((key, book) async {
-      if (book.masterWordsID.contains(master.id)) {
-        book.masterWordsID.remove(master.id);
-        await database.books.update(book);
+    await Future.wait(books.entries.map((e) async {
+      if (e.value.masterWordsID.contains(master.id)) {
+        e.value.masterWordsID.remove(master.id);
+        return await database.books.update(e.value);
       }
-    });
+    }));
+
+    await database.commit();
   }
 
   /// Updates changes to a word
   /// Updating language might lead to conflicts if master has already a word
   /// in the same language. New master will be created if that happens.
   Future updateChangesToWord(Word word) async {
-    if (word.id == null){
+    if (word.id == null) {
       throw Exception("Should not update an object which is not persisted");
     }
 
     final master = await word.masterWordFuture;
     var trans = await master.translationsFuture;
+
+    database.batch();
 
     // If master already have a translation in same
     // language the word wants to be updated to
@@ -93,5 +142,39 @@ class PersistentDatabase extends IPersistentDatabase {
     }
 
     await database.words.update(word);
+
+    await database.commit();
+  }
+
+  /// Outer Map Key -> MasterWordID
+  /// Inner Map Key -> LanguageID
+  /// Words are all the words linked to the master word.
+  Future<Map<int, Map<int, Word>>> loadAndGroupWords(
+      Book book, Set<int> languageIDs) async {
+    final masterWords = await book.masterWordsFuture;
+
+    final wordIDs = masterWords.values
+        .expand((e) => e.translationsID)
+        .toSet();
+
+    final words = await database.words.getMany(wordIDs.toList());
+    final map = words.values
+        .where((e) => languageIDs.contains(e.languageID))
+        .groupBy((e) => e.masterWordID)
+        .innerGroupBy((w) => w.languageID);
+
+    // If database does not contain some words, still create empty maps or nulls
+    // inside the inner one, if word is not translated to the desired language
+    var mapWithEmpties = masterWords.map((id, master) {
+      var innerMap = HashMap<int, Word>();
+
+      languageIDs.forEach((langId) {
+        innerMap[langId] = map[id][langId];
+      });
+
+      return MapEntry(id, innerMap);
+    });
+
+    return mapWithEmpties;
   }
 }

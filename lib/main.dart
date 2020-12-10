@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bocagoi/services/analytics.dart';
 import 'package:bocagoi/services/authentication.dart';
 import 'package:bocagoi/services/database.dart';
@@ -29,7 +31,6 @@ void main() async {
 
   unawaited(
       () => FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true));
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
   final database = Database();
   final prefs = UserPrefs();
@@ -42,11 +43,23 @@ void main() async {
   Dependencies.add<IPersistentDatabase, PersistentDatabase>(persistentDatabase);
   Dependencies.printDebug();
 
-  runApp(MyApp());
+  FlutterError.onError = (FlutterErrorDetails details) async {
+    print(details.exception?.toString());
+
+    Zone.current.handleUncaughtError(details.exception, details.stack);
+    await FirebaseCrashlytics.instance.recordFlutterError(details);
+  };
+
+  unawaited(
+    () => runZonedGuarded<Future<void>>(() async {
+      runApp(MyApp());
+    }, (error, stackTrace) async {
+      // You can handle error
+    }),
+  );
 }
 
 class MyApp extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

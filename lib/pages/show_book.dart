@@ -3,14 +3,14 @@ import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ShowBookPage extends StatefulWidget {
-  ShowBookPage({@required this.book, Key key})
-      : super(key: key);
+  ShowBookPage({@required this.book, Key key}) : super(key: key);
 
   final Book book;
 
@@ -19,17 +19,28 @@ class ShowBookPage extends StatefulWidget {
 }
 
 class _ShowBookPageState extends State<ShowBookPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   final IDatabase database;
+  final IPersistentDatabase persistentDatabase;
 
-  _ShowBookPageState(this.book) : database = Dependencies.get<IDatabase>() {
-    _bookHasNoWords =
-        book.masterWordsID == null || book.masterWordsID.isEmpty;
+  _ShowBookPageState(this.book)
+      : database = Dependencies.get<IDatabase>(),
+        persistentDatabase = Dependencies.get<IPersistentDatabase>() {
+    _bookHasNoWords = book.masterWordsID == null || book.masterWordsID.isEmpty;
+    loadWordsFuture = loadWords();
   }
 
   bool _bookHasNoWords;
   Book book;
+
+  Map<int, Map<int, Word>> words;
+
+  Future<bool> loadWordsFuture;
+
+  Future<bool> loadWords() async {
+    words = await persistentDatabase.loadAndGroupWords(book, [1, 2].toSet());
+
+    return words.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +48,9 @@ class _ShowBookPageState extends State<ShowBookPage> {
       appBar: AppBar(
         title: Text("Book:".tr() + " " + book.name),
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: buildBookWordListView(),
-        ),
+      body: LoadingPageWithProgressIndicator<bool>(
+        future: loadWordsFuture,
+        body: buildBookWordListView,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: addNewWord,
@@ -52,11 +60,11 @@ class _ShowBookPageState extends State<ShowBookPage> {
     );
   }
 
-  Widget buildBookWordListView() {
-    if (_bookHasNoWords) {
+  Widget buildBookWordListView(bool hasData) {
+    if (_bookHasNoWords || !hasData) {
       return buildTextMessage();
     } else {
-      return buildListOfWords();
+      return buildListOfWords(words);
     }
   }
 
@@ -66,25 +74,16 @@ class _ShowBookPageState extends State<ShowBookPage> {
     );
   }
 
-  Widget buildListOfWords() {
-    var header = Center(
-      child: PrimaryText(book.name),
-    );
-
-    var wordElements = book.masterWordsID.map(
-      (e) => ListTile(
-        title: Row(
-          children: [
-            //Text(e.translations.values.first),
-          ],
-        ),
-      ),
-    );
-
+  Widget buildListOfWords(Map<int, Map<int, Word>> words) {
     return ListView(
       children: [
-        header,
-        ...wordElements,
+        Center(child: PrimaryText(book.name)),
+        ...words.values.map(
+          (trans) => ListTile(
+            title:
+                MultiListTile(list: trans.values.map((e) => e?.text).toList()),
+          ),
+        ),
       ],
     );
   }
@@ -92,11 +91,11 @@ class _ShowBookPageState extends State<ShowBookPage> {
   void addNewWord() async {
     print("Navigating to edit word page: ");
 
-    await Navigator.of(context)
-        .push(MaterialPageRoute<void>(
-            builder: (ctx) => EditWordPage(
-                  word: Word(), book: book,
-                )));
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (ctx) => EditWordPage(
+              word: Word(),
+              book: book,
+            )));
 
     final newBook = await database.books.get(book.id);
 

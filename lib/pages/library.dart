@@ -25,7 +25,7 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   final IDatabase database;
 
-  Future<HashMap<int, Book>> books;
+  Future<Map<int, Book>> books;
 
   _LibraryPageState() : database = Dependencies.get<IDatabase>() {
     books = database.books.getAll();

@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
@@ -28,9 +26,9 @@ class _DictionaryPageState extends State<DictionaryPage> {
 
   Future<bool> loadDataFuture;
 
-  HashMap<int, Word> words;
-  HashMap<int, MasterWord> masterWords;
-  HashMap<int, Language> languages;
+  Map<int, Word> words;
+  Map<int, MasterWord> masterWords;
+  Map<int, Language> languages;
 
   _DictionaryPageState() : database = Dependencies.get<IDatabase>() {
     loadDataFuture = loadData();
@@ -39,6 +37,12 @@ class _DictionaryPageState extends State<DictionaryPage> {
   Future<bool> loadData() async {
     words = await database.words.getAll();
     languages = await database.languages.getAll();
+    masterWords = await database.masterWords.getAll();
+    return words.isEmpty;
+  }
+
+  Future<bool> reloadWords() async {
+    words = await database.words.getAll();
     masterWords = await database.masterWords.getAll();
     return words.isEmpty;
   }
@@ -97,8 +101,8 @@ class _DictionaryPageState extends State<DictionaryPage> {
 
     await Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (ctx) => EditWordPage(
-          word: word,
-        )));
+              word: word,
+            )));
 
     setStateAndUpdateWords();
   }
@@ -108,6 +112,7 @@ class _DictionaryPageState extends State<DictionaryPage> {
   void setStateAndUpdateWords() {
     setState(() {
       print("Dictionary: Setting state");
+      loadDataFuture = reloadWords();
     });
   }
 }

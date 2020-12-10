@@ -11,3 +11,11 @@ abstract class IHaveRelations extends IHaveID {
 abstract class SerializesToMap{
 
 }
+
+class Tuple<T, K>{
+
+  T item1;
+  K item2;
+
+  Tuple(this.item1, this.item2);
+}

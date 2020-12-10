@@ -4,17 +4,42 @@ import 'package:bocagoi/models/abstractions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 abstract class IObjectProvider<T extends IHaveID> {
-  Future<String> add(T obj);
+  IObjectProvider(
+      {String path,
+      T Function(Map<String, dynamic>) constructor,
+      Map<String, dynamic> Function(T) serializer});
 
-  Future<void> delete(int id);
+  final Set<int> _idsTaken = HashSet<int>();
+
+  WriteBatch _batch;
+
+  void batch(WriteBatch batch) {
+    _batch = batch;
+    _idsTaken.clear();
+  }
+
+  void commit() {
+    _batch = null;
+    _idsTaken.clear();
+  }
+
+  Future<bool> add(T obj);
+
+  Future<bool> delete(int id);
+
+  Future<bool> deleteAll();
 
   Future<T> get(int id);
 
-  Future<HashMap<int, T>> getMultiple(Iterable<int> list);
+  Future<Map<int, T>> getMany(List<int> list);
 
-  Future<HashMap<int, T>> getAll();
+  Future<Map<int, T>> getAll();
 
-  Future<void> update(T obj);
+  Future<bool> update(T obj);
+
+  Future<int> getNextFreeID();
+
+  Future<List<int>> getNextFreeIDs(int amountOfIds);
 }
 
 class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
@@ -24,27 +49,39 @@ class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
   T Function(Map<String, dynamic>) constructor;
   Map<String, dynamic> Function(T) serializer;
 
-  Future<String> add(T obj) async {
+  Future<bool> add(T obj) async {
     obj.id ??= await getNextFreeID();
-
-    await update(obj);
-    return obj.id.toString();
-
-    /* This type of adding will generate random id
-    var collection = _getCollection(pathBooks);
-    var r = await collection.add(obj.toMap());
-    print("Book added: " + r.id);
-    return r.id;
-    */
+    return await update(obj);
   }
 
-  Future<void> delete(int id) async {
+  Future<bool> delete(int id) async {
     try {
       var collection = _getCollection(path);
       var doc = collection.doc(id.toString());
-      await doc.delete();
+
+      if (_batch == null) {
+        await doc.delete();
+      } else {
+        _batch.delete(doc);
+      }
+
+      return true;
     } catch (e) {
       print(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deleteAll() async {
+    try {
+      final map = await getAll();
+      var collection = _getCollection(path);
+      await Future.wait(map.entries
+          .map((e) async => await collection.doc(e.key.toString()).delete()));
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
     }
   }
 
@@ -61,22 +98,25 @@ class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
     }
   }
 
-  Future<HashMap<int, T>> getMultiple(Iterable<int> list) async {
+  Future<Map<int, T>> getMany(List<int> list) async {
     try {
       var collection = _getCollection(path);
-      var doc = collection.where("id", arrayContains: list);
+      // var docs = list.map((id) => collection.doc(id.toString()));
 
-      var data = await doc.get();
-      var map = _produceHashMapFromSnapshot(data, constructor);
-
-      return map;
+      if (list.isNotEmpty) {
+        var data = await collection.where("id", whereIn: list).get();
+        var map = _produceHashMapFromSnapshot(data, constructor);
+        return map;
+      } else {
+        return HashMap<int, T>();
+      }
     } catch (e) {
       print(e.toString());
       return null;
     }
   }
 
-  Future<HashMap<int, T>> getAll() async {
+  Future<Map<int, T>> getAll() async {
     try {
       var snapshot = await _getCollection(path).get();
       var map = _produceHashMapFromSnapshot(snapshot, constructor);
@@ -87,18 +127,25 @@ class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
     }
   }
 
-  Future<void> update(T obj) async {
-    if (obj.id == null){
+  Future<bool> update(T obj) async {
+    if (obj.id == null) {
       throw Exception("Should not update an object which is not persisted");
     }
 
     try {
       var collection = _getCollection(path);
       var doc = collection.doc(obj.id.toString());
-      await doc.set(serializer(obj));
+
+      if (_batch == null) {
+        await doc.set(serializer(obj));
+      } else {
+        _batch.set(doc, serializer(obj));
+      }
+
+      return true;
     } catch (e) {
       print(e.toString());
-      return null;
+      return false;
     }
   }
 
@@ -107,11 +154,35 @@ class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
     final set =
         snapshot.docs.map<dynamic>((e) => e.data()["id"]).cast<int>().toSet();
 
-    var i = 1;
-    while (set.contains(i)) {
-      i++;
+    var id = 1;
+    while (set.contains(id) && _idsTaken.contains(id)) {
+      id++;
     }
-    return i;
+
+    // If batch editing, every time return new ids
+    if (_batch != null) {
+      _idsTaken.add(id);
+    }
+
+    return id;
+  }
+
+  Future<List<int>> getNextFreeIDs(int amountOfIds) async {
+    final snapshot = await _getCollection(path).get();
+    final set =
+        snapshot.docs.map<dynamic>((e) => e.data()["id"]).cast<int>().toSet();
+
+    final list = <int>[];
+    var id = 1;
+    for (var i = 0; i < amountOfIds; i++) {
+      while (set.contains(id) && _idsTaken.contains(id)) {
+        id++;
+      }
+      list.add(id);
+      id++;
+    }
+
+    return list;
   }
 }
 

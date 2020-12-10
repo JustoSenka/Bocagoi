@@ -30,7 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Language primaryLanguage;
   Language secondaryLanguage;
   Language foreignLanguage;
-  HashMap<int, Language> languages;
+  Map<int, Language> languages;
 
   final IDatabase database;
   final IAuth auth;
@@ -58,10 +58,18 @@ class _SettingsPageState extends State<SettingsPage> {
       child: ListView(
         children: [
           Divider(),
-          DoubleListTile(left: "User ID:".tr(), right: user.uid),
-          DoubleListTile(left: "User Email:".tr(), right: user.email),
           DoubleListTile(
-              left: "User Display Name:".tr(), right: user.displayName),
+              left: "User ID:".tr(),
+              right: user.uid,
+              titleStyle: TextStyle(fontFamily: "Monospace")),
+          DoubleListTile(
+              left: "User Email:".tr(),
+              right: user.email,
+              titleStyle: TextStyle(fontFamily: "Monospace")),
+          DoubleListTile(
+              left: "User Display Name:".tr(),
+              right: user.displayName,
+              titleStyle: TextStyle(fontFamily: "Monospace")),
           Divider(),
           ListTileDropdown(
             title: "Primary Language".tr(),
@@ -143,4 +151,3 @@ class _SettingsPageState extends State<SettingsPage> {
     return true;
   }
 }
-

@@ -20,14 +20,15 @@ dependencies:
 
   # Firebase: Updated 2020 November
   # Do not upgrade or use ^, they break backwards compat sometimes.
-  firebase_core: 0.5.2+1
-  cloud_firestore: 0.14.3+1
+
+  firebase_core: 0.5.2+1 # if breaks, use ^0.4.4 (orig 0.5.2+1)
+  cloud_firestore: 0.14.3+1 # if breaks, use 0.13.6 (orig 0.14.3+1)
 
   firebase_auth: 0.18.3+1
   google_sign_in: 4.5.6
 
-  firebase_analytics: 6.2.0
-  firebase_crashlytics: 0.2.3+1
+  firebase_analytics: 6.2.0 # if breaks, use ^5.0.0 (orig 6.2.0)
+  firebase_crashlytics: 0.2.3+1 # if breaks, ^use 0.1.0 (orig 0.2.3+1)
 
 dev_dependencies:
   flutter_test:

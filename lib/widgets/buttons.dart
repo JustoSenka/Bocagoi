@@ -114,12 +114,17 @@ class SaveButton extends StatelessWidget {
 }
 
 class PrimaryText extends StatelessWidget {
-  PrimaryText(this.text, {Key key}) : super(key: key);
+  PrimaryText(this.text, {this.center = false, Key key}) : super(key: key);
 
   final String text;
+  final bool center;
 
   @override
   Widget build(BuildContext context) {
+    return center ? Center(child: buildText()) : buildText();
+  }
+
+  Text buildText() {
     return Text(
       text,
       style: TextStyle(
@@ -130,19 +135,24 @@ class PrimaryText extends StatelessWidget {
 }
 
 class SecondaryText extends StatelessWidget {
-  SecondaryText(this.text, {Key key}) : super(key: key);
+  SecondaryText(this.text, {this.center = false, Key key}) : super(key: key);
 
   final String text;
+  final bool center;
 
   @override
   Widget build(BuildContext context) {
+    return center ? Center(child: buildText()) : buildText();
+  }
+
+  Text buildText() {
     return Text(
-      text,
-      style: TextStyle(
-        fontSize: FontSize.xsmall.units,
-        color: BootstrapColors.secondary,
-      ),
-    );
+    text,
+    style: TextStyle(
+      fontSize: FontSize.xsmall.units,
+      color: BootstrapColors.secondary,
+    ),
+  );
   }
 }
 
@@ -346,14 +356,16 @@ class ListTileDropdown extends StatelessWidget {
 
 List<DropdownMenuItem<int>> buildDropdownItems(
     Map<int, IHaveID> map, String Function(int) dropdownTextGetter) {
-  return map.entries.map(
-    (e) => DropdownMenuItem<int>(
-      value: e.value.id,
-      child: PrimaryText(
-        dropdownTextGetter(e.value.id),
-      ),
-    ),
-  ).toList();
+  return map.entries
+      .map(
+        (e) => DropdownMenuItem<int>(
+          value: e.value.id,
+          child: PrimaryText(
+            dropdownTextGetter(e.value.id),
+          ),
+        ),
+      )
+      .toList();
 }
 
 class DoubleListTile extends StatelessWidget {
@@ -361,10 +373,12 @@ class DoubleListTile extends StatelessWidget {
     Key key,
     this.left,
     this.right,
+    this.titleStyle
   }) : super(key: key);
 
   final String left;
   final String right;
+  final TextStyle titleStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +387,7 @@ class DoubleListTile extends StatelessWidget {
         children: [
           Text(
             left ?? "<empty>".tr(),
-            style: TextStyle(fontFamily: "Monospace"),
+            style: titleStyle,
           ),
           Spacer(),
           Text(right ?? "<empty>".tr()),
@@ -381,4 +395,35 @@ class DoubleListTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class MultiListTile extends StatelessWidget {
+  const MultiListTile({
+    Key key,
+    this.list,
+  }) : super(key: key);
+
+  final List<String> list;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Row(
+        children: buildList(),
+      ),
+    );
+  }
+
+  List<Widget> buildList() {
+    var newList = <Widget>[];
+    newList.add(buildText(0));
+    for (var i = 1; i < list.length; i++){
+      newList.add(Spacer());
+      newList.add(buildText(i));
+    }
+
+    return newList;
+  }
+
+  Text buildText(int i) => Text(list[i] ?? "<empty>".tr());
 }
