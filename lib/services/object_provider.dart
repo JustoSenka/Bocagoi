@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:bocagoi/models/abstractions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-abstract class IObjectProvider<T extends IHaveID> {
+abstract class IObjectProvider<T extends DbObject> {
   IObjectProvider(
       {String path,
       T Function(Map<String, dynamic>) constructor,
@@ -19,6 +19,11 @@ abstract class IObjectProvider<T extends IHaveID> {
   }
 
   void commit() {
+    _batch = null;
+    _idsTaken.clear();
+  }
+
+  void cancel() {
     _batch = null;
     _idsTaken.clear();
   }
@@ -42,7 +47,7 @@ abstract class IObjectProvider<T extends IHaveID> {
   Future<List<int>> getNextFreeIDs(int amountOfIds);
 }
 
-class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
+class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   ObjectProvider({this.path, this.constructor, this.serializer});
 
   String path;
@@ -128,11 +133,16 @@ class ObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
   }
 
   Future<bool> update(T obj) async {
-    if (obj.id == null) {
-      throw Exception("Should not update an object which is not persisted");
-    }
-
     try {
+      if (obj.id == null) {
+        throw Exception("Should not update an object which is not persisted");
+      }
+
+      if (!obj.areRequiredFieldsSet()) {
+        throw Exception(
+            "Cannot update database objects since required fields are not set");
+      }
+
       var collection = _getCollection(path);
       var doc = collection.doc(obj.id.toString());
 

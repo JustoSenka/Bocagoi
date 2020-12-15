@@ -52,7 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget buildSettingsBody(bool _) {
+  Widget buildSettingsBody(bool hasData) {
     return Padding(
       padding: EdgeInsets.all(5),
       child: ListView(

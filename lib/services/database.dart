@@ -6,9 +6,26 @@ import 'package:bocagoi/services/object_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 abstract class IDatabase {
+
+  Future<bool> batchRequests(void Function() function) async {
+    try {
+      batch();
+      await function();
+      final res = await commit();
+      return res;
+    }
+    catch (e){
+      cancel();
+      print(e.toString());
+      return false;
+    }
+  }
+
   void batch();
 
   Future<bool> commit();
+
+  void cancel();
 
   IObjectProvider<Book> get books;
 
@@ -70,6 +87,14 @@ class Database extends IDatabase {
     }
 
     return true;
+  }
+
+  void cancel() {
+    _batch = null;
+    _Books.commit();
+    _Words.commit();
+    _MasterWords.commit();
+    _Languages.commit();
   }
 
   final IObjectProvider<Book> _Books = ObjectProvider<Book>(

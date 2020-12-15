@@ -8,7 +8,7 @@ import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/object_provider.dart';
 
-class TestObjectProvider<T extends IHaveID> extends IObjectProvider<T> {
+class TestObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   TestObjectProvider() {
     map = HashMap<int, T>();
   }
@@ -110,4 +110,7 @@ class TestDatabase extends IDatabase {
   Future<bool> commit() async {
     return true;
   }
+
+  @override
+  void cancel() {}
 }

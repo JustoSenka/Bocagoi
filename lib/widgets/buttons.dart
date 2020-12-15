@@ -147,12 +147,12 @@ class SecondaryText extends StatelessWidget {
 
   Text buildText() {
     return Text(
-    text,
-    style: TextStyle(
-      fontSize: FontSize.xsmall.units,
-      color: BootstrapColors.secondary,
-    ),
-  );
+      text,
+      style: TextStyle(
+        fontSize: FontSize.xsmall.units,
+        color: BootstrapColors.secondary,
+      ),
+    );
   }
 }
 
@@ -341,27 +341,34 @@ class ListTileDropdown extends StatelessWidget {
             child: DropdownButton<int>(
               value: value,
               onChanged: onChanged,
-              items: [
-                if (addNoneSelection)
-                  DropdownMenuItem<int>(value: 0, child: Text("None".tr())),
-                ...buildDropdownItems(map, dropdownTextGetter),
-              ],
+              items: buildItems(),
             ),
           ),
         ],
       ),
     );
   }
+
+  List<DropdownMenuItem<int>> buildItems() {
+    final items = [
+      // value == 0 safeguard if unset value is here, show none by default
+      // if users select something else, none option will disappear forever
+      if (addNoneSelection || value == 0)
+        DropdownMenuItem<int>(value: 0, child: Text("None".tr())),
+      ...buildDropdownItems(map, dropdownTextGetter),
+    ];
+    return items;
+  }
 }
 
 List<DropdownMenuItem<int>> buildDropdownItems(
     Map<int, IHaveID> map, String Function(int) dropdownTextGetter) {
-  return map.entries
+  return map.values
       .map(
         (e) => DropdownMenuItem<int>(
-          value: e.value.id,
+          value: e.id,
           child: PrimaryText(
-            dropdownTextGetter(e.value.id),
+            dropdownTextGetter(e.id),
           ),
         ),
       )
@@ -369,12 +376,8 @@ List<DropdownMenuItem<int>> buildDropdownItems(
 }
 
 class DoubleListTile extends StatelessWidget {
-  const DoubleListTile({
-    Key key,
-    this.left,
-    this.right,
-    this.titleStyle
-  }) : super(key: key);
+  const DoubleListTile({Key key, this.left, this.right, this.titleStyle})
+      : super(key: key);
 
   final String left;
   final String right;
@@ -417,7 +420,8 @@ class MultiListTile extends StatelessWidget {
   List<Widget> buildList() {
     var newList = <Widget>[];
     newList.add(buildText(0));
-    for (var i = 1; i < list.length; i++){
+
+    for (var i = 1; i < list.length; i++) {
       newList.add(Spacer());
       newList.add(buildText(i));
     }

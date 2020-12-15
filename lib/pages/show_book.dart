@@ -1,9 +1,11 @@
 import 'package:bocagoi/models/book.dart';
+import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
+import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/foundation.dart';
@@ -21,10 +23,12 @@ class ShowBookPage extends StatefulWidget {
 class _ShowBookPageState extends State<ShowBookPage> {
   final IDatabase database;
   final IPersistentDatabase persistentDatabase;
+  final IUserPrefs userPrefs;
 
   _ShowBookPageState(this.book)
       : database = Dependencies.get<IDatabase>(),
-        persistentDatabase = Dependencies.get<IPersistentDatabase>() {
+        persistentDatabase = Dependencies.get<IPersistentDatabase>(),
+        userPrefs = Dependencies.get<IUserPrefs>() {
     _bookHasNoWords = book.masterWordsID == null || book.masterWordsID.isEmpty;
     loadWordsFuture = loadWords();
   }
@@ -33,11 +37,30 @@ class _ShowBookPageState extends State<ShowBookPage> {
   Book book;
 
   Map<int, Map<int, Word>> words;
+  List<Language> languages;
+  int primaryLangID;
+  int foreignLangID;
+  int secondaryLangID;
+
+  bool get isThreeColumn => secondaryLangID != null;
 
   Future<bool> loadWordsFuture;
 
   Future<bool> loadWords() async {
-    words = await persistentDatabase.loadAndGroupWords(book, [1, 2].toSet());
+    final prefs = await userPrefs.load();
+    primaryLangID = await prefs.getPrimaryLanguageID();
+    foreignLangID = await prefs.getForeignLanguageID();
+    secondaryLangID = await prefs.getSecondaryLanguageID();
+    final langsToGet = isThreeColumn
+        ? [primaryLangID, foreignLangID, secondaryLangID]
+        : [primaryLangID, foreignLangID];
+
+    final languageMap = await database.languages.getAll();
+    languages = languageMap.values.where((e) =>
+        langsToGet.contains(e.id)).toList(growable: false);
+
+    words =
+    await persistentDatabase.loadAndGroupWords(book, langsToGet.toSet());
 
     return words.isNotEmpty;
   }
@@ -76,15 +99,17 @@ class _ShowBookPageState extends State<ShowBookPage> {
 
   Widget buildListOfWords(Map<int, Map<int, Word>> words) {
     return ListView(
-      children: [
-        Center(child: PrimaryText(book.name)),
-        ...words.values.map(
-          (trans) => ListTile(
-            title:
-                MultiListTile(list: trans.values.map((e) => e?.text).toList()),
-          ),
-        ),
-      ],
+        children: [
+    MultiListTile(
+    list: languages.values.ma),
+    ),
+    ...words.values.map(
+    (trans) => MultiListTile(
+    list: trans.values.map((e) => e?.text).toList(),
+    ),
+    ),
+    ]
+    ,
     );
   }
 
@@ -92,7 +117,8 @@ class _ShowBookPageState extends State<ShowBookPage> {
     print("Navigating to edit word page: ");
 
     await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (ctx) => EditWordPage(
+        builder: (ctx) =>
+            EditWordPage(
               word: Word(),
               book: book,
             )));

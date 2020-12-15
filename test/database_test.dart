@@ -109,7 +109,7 @@ class DatabaseTests {
 
       var book = await addTwoWordsAndTwoTranslations();
       var words =
-          await persistentDatabase.loadAndGroupWords(book, [1, 2].toSet());
+          await persistentDatabase.loadAndGroupWords(book, [101, 102].toSet());
 
       expectTwoWordsAndTwoTranslations(words);
     });
@@ -121,18 +121,19 @@ class DatabaseTests {
 
       var book = await addTwoWordsAndTwoTranslations();
       var words =
-          await persistentDatabase.loadAndGroupWords(book, [1, 2].toSet());
+          await persistentDatabase.loadAndGroupWords(book, [101, 102].toSet());
 
       // adding additional words which fit language, but are not in the book
-      var master1 = MasterWord(id: 3, translationsID: [5, 6].toSet());
+      var master1 = MasterWord(id: 3, translationsID: [15, 16].toSet());
       await database.masterWords.add(master1);
-      await database.words.add(Word(id: 5, masterWordID: 3, languageID: 1));
-      await database.words.add(Word(id: 6, masterWordID: 3, languageID: 2));
+      await database.words.add(Word(id: 15, masterWordID: 3, languageID: 101));
+      await database.words.add(Word(id: 16, masterWordID: 3, languageID: 102));
 
       // adding additional words which don't fit the language
-      var existingMaster = MasterWord(id: 2, translationsID: [5, 6, 7].toSet());
+      var existingMaster =
+          MasterWord(id: 2, translationsID: [15, 16, 17].toSet());
       await database.masterWords.update(existingMaster);
-      await database.words.add(Word(id: 7, masterWordID: 2, languageID: 2));
+      await database.words.add(Word(id: 17, masterWordID: 2, languageID: 102));
 
       expectTwoWordsAndTwoTranslations(words);
     });
@@ -143,31 +144,54 @@ class DatabaseTests {
 
       var book = await addTwoWordsAndTwoTranslations();
       var words =
-          await persistentDatabase.loadAndGroupWords(book, [1, 3].toSet());
+          await persistentDatabase.loadAndGroupWords(book, [101, 103].toSet());
 
       expect(words.length, 2);
       expect(words[1].length, 2);
       expect(words[2].length, 2);
 
-      expect(words[1][1].languageID, 1);
-      expect(words[2][1].languageID, 1);
-      expect(words[1][1].masterWordID, 1);
-      expect(words[2][1].masterWordID, 2);
+      expect(words[1][101].languageID, 101);
+      expect(words[2][101].languageID, 101);
+      expect(words[1][101].masterWordID, 1);
+      expect(words[2][101].masterWordID, 2);
 
-      expect(words[1][3], null); // word to these langs was not translated
-      expect(words[2][3], null);
+      expect(words[1][103], null); // word to these langs was not translated
+      expect(words[2][103], null);
+    });
+
+    test("Getting grouped words by language if none are found", () async {
+      await clean();
+
+      var book = await addTwoWordsAndTwoTranslations();
+      var words =
+          await persistentDatabase.loadAndGroupWords(book, [106, 107].toSet());
+
+      // Books still has 2 master words added, although they don't have translations
+      expect(words.length, 2);
+      expect(words[1].length, 2);
+      expect(words[2].length, 2);
+
+      expect(words[1][101], null);
+      expect(words[1][101], null);
+      expect(words[2][102], null);
+      expect(words[2][102], null);
+
+      expect(words[2][101], null);
+      expect(words[2][101], null);
+      expect(words[1][102], null);
+      expect(words[1][102], null);
     });
   }
 
   Future<Book> addTwoWordsAndTwoTranslations() async {
-    var master1 = MasterWord(id: 1, translationsID: [1, 2].toSet());
-    var master2 = MasterWord(id: 2, translationsID: [3, 4].toSet());
+    var master1 = MasterWord(id: 1, translationsID: [11, 12].toSet());
+    var master2 = MasterWord(id: 2, translationsID: [13, 14].toSet());
     var book = Book(id: 1, masterWordsID: [1, 2].toSet());
 
-    await database.words.add(Word(id: 1, masterWordID: 1, languageID: 1));
-    await database.words.add(Word(id: 2, masterWordID: 1, languageID: 2));
-    await database.words.add(Word(id: 3, masterWordID: 2, languageID: 1));
-    await database.words.add(Word(id: 4, masterWordID: 2, languageID: 2));
+    await database.words.add(Word(id: 11, masterWordID: 1, languageID: 101));
+    await database.words.add(Word(id: 12, masterWordID: 1, languageID: 102));
+    await database.words.add(Word(id: 13, masterWordID: 2, languageID: 101));
+    await database.words.add(Word(id: 14, masterWordID: 2, languageID: 102));
 
     await database.masterWords.add(master1);
     await database.masterWords.add(master2);
@@ -180,14 +204,14 @@ class DatabaseTests {
     expect(words[1].length, 2);
     expect(words[2].length, 2);
 
-    expect(words[1][1].languageID, 1);
-    expect(words[2][1].languageID, 1);
-    expect(words[1][2].languageID, 2);
-    expect(words[2][2].languageID, 2);
+    expect(words[1][101].languageID, 101);
+    expect(words[2][101].languageID, 101);
+    expect(words[1][102].languageID, 102);
+    expect(words[2][102].languageID, 102);
 
-    expect(words[1][1].masterWordID, 1);
-    expect(words[2][1].masterWordID, 2);
-    expect(words[1][2].masterWordID, 1);
-    expect(words[2][2].masterWordID, 2);
+    expect(words[1][101].masterWordID, 1);
+    expect(words[2][101].masterWordID, 2);
+    expect(words[1][102].masterWordID, 1);
+    expect(words[2][102].masterWordID, 2);
   }
 }

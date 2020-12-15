@@ -4,7 +4,7 @@ import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 
-class Word implements IHaveID {
+class Word implements DbObject, IHaveID, IHaveRequiredFields {
   Word(
       {this.id,
       this.text,
@@ -77,4 +77,8 @@ class Word implements IHaveID {
     article = w.article;
     languageID = w.languageID;
   }
+
+  @override
+  bool areRequiredFieldsSet() =>
+      text != null && languageID != null && masterWordID != null;
 }

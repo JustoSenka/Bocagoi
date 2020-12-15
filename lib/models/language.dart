@@ -1,6 +1,6 @@
 import 'package:bocagoi/models/abstractions.dart';
 
-class Language implements IHaveID {
+class Language implements DbObject, IHaveID, IHaveRequiredFields {
   Language({this.id, this.name});
 
   int id;
@@ -21,4 +21,7 @@ class Language implements IHaveID {
       "name": name,
     };
   }
+
+  @override
+  bool areRequiredFieldsSet() => name != null;
 }

@@ -4,7 +4,7 @@ import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/extensions.dart';
 
-class MasterWord implements IHaveID {
+class MasterWord implements DbObject, IHaveID, IHaveRequiredFields {
   MasterWord({this.id, Set<int> translationsID})
       : translationsID = translationsID ?? Set<int>();
 
@@ -15,8 +15,9 @@ class MasterWord implements IHaveID {
   Map<int, Word> translations;
 
   Future<Map<int, Word>> get translationsFuture async {
-    final words =
-        await Dependencies.get<IDatabase>().words.getMany(translationsID.toList());
+    final words = await Dependencies.get<IDatabase>()
+        .words
+        .getMany(translationsID.toList());
     // Change key from wordID to languageID.
     return translations =
         words.map((key, value) => MapEntry(value.languageID, value));
@@ -40,4 +41,8 @@ class MasterWord implements IHaveID {
       "translationsID": translationsID.toList(growable: false),
     };
   }
+
+  @override
+  bool areRequiredFieldsSet() =>
+      translationsID != null && translationsID.isNotEmpty;
 }

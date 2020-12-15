@@ -4,7 +4,7 @@ import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/extensions.dart';
 
-class Book implements IHaveID {
+class Book implements DbObject, IHaveID, IHaveRequiredFields {
   Book({this.id, this.name, this.description, Set<int> masterWordsID})
       : masterWordsID = masterWordsID ?? Set<int>();
 
@@ -49,4 +49,7 @@ class Book implements IHaveID {
       "masterWordsID": book.masterWordsID.toList(growable: false),
     };
   }
+
+  @override
+  bool areRequiredFieldsSet() => masterWordsID != null && name != null;
 }

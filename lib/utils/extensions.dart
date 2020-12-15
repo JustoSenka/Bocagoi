@@ -2,17 +2,16 @@ import 'dart:collection';
 
 import 'package:bocagoi/models/abstractions.dart';
 
-extension MapExtension<T> on Map<int, T> {
-  /*int getNextFreeKey() {
-    var i = 1;
-    while (containsKey(i)){
-      i++;
-    }
-    return i;
-  }*/
+extension MapIntExtension<T> on Map<int, T> {
 
-  Map<String, T> Stringify() {
+  Map<String, T> stringify() {
     return map((key, value) => MapEntry(key.toString(), value));
+  }
+}
+
+extension MapExtension<E, T> on Map<E, T> {
+  T tryGet(E key) {
+    return containsKey(key) ? this[key] : null;
   }
 }
 

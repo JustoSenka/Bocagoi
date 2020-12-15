@@ -54,7 +54,8 @@ void main() async {
     () => runZonedGuarded<Future<void>>(() async {
       runApp(MyApp());
     }, (error, stackTrace) async {
-      // You can handle error
+      print(error.toString());
+      throw error;
     }),
   );
 }
