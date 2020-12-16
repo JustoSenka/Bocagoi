@@ -1,13 +1,13 @@
-import 'dart:collection';
-
 import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/logger.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +22,7 @@ class EditWordPage extends StatefulWidget {
       _EditWordPageState(wordCopy: Word.from(word));
 }
 
-class _EditWordPageState extends State<EditWordPage> {
+class _EditWordPageState extends BaseState<EditWordPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final IDatabase database;
@@ -52,8 +52,9 @@ class _EditWordPageState extends State<EditWordPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text(_isWordPersisted ? "Edit Word".tr() : "Add Word".tr()),
       ),
@@ -64,7 +65,7 @@ class _EditWordPageState extends State<EditWordPage> {
     );
   }
 
-  Form buildForm(bool _) {
+  Widget buildForm(bool _) {
     return Form(
       key: _formKey,
       child: Padding(
@@ -145,8 +146,12 @@ class _EditWordPageState extends State<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-              await persistentDatabase.updateChangesToWord(wordCopy);
-              Navigator.of(context).pop();
+              try {
+                await persistentDatabase.updateChangesToWord(wordCopy);
+                Navigator.of(context).pop();
+              } catch (e) {
+                Logger.log("Error: ".tr() + e.toString());
+              }
             },
           ),
         ],
@@ -159,8 +164,13 @@ class _EditWordPageState extends State<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-              await persistentDatabase.addNewWord(wordCopy, book: widget.book);
-              Navigator.of(context).pop();
+              try {
+                await persistentDatabase.addNewWord(wordCopy,
+                    book: widget.book);
+                Navigator.of(context).pop();
+              } catch (e) {
+                Logger.log("Error: ".tr() + e.toString());
+              }
             },
           ),
         ],

@@ -18,6 +18,11 @@ class TestObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   @override
   Future<bool> add(T obj) async {
     obj.id ??= await getNextFreeID();
+
+    if (map.containsKey(obj.id)){
+      ObjectAlreadyExistsException(obj);
+    }
+
     map[obj.id] = obj;
     return true;
   }
@@ -52,7 +57,7 @@ class TestObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   @override
   Future<bool> update(T obj) async {
     if (obj.id == null) {
-      throw Exception("Should not update an object which is not persisted");
+      throw ObjectDoesNotExistException(obj);
     }
 
     map[obj.id] = obj;

@@ -2,9 +2,9 @@ import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/material.dart';
-import 'package:bocagoi/utils/extensions.dart';
 
 class EditBookPage extends StatefulWidget {
   EditBookPage({@required this.book, Key key})
@@ -16,7 +16,7 @@ class EditBookPage extends StatefulWidget {
   _EditBookPageState createState() => _EditBookPageState(book);
 }
 
-class _EditBookPageState extends State<EditBookPage> {
+class _EditBookPageState extends BaseState<EditBookPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final IDatabase database;
@@ -32,8 +32,9 @@ class _EditBookPageState extends State<EditBookPage> {
   String _description;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text(_isBookPersisted ? "Edit Book".tr() : "Add Book".tr()),
       ),

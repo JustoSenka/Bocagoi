@@ -17,6 +17,7 @@ abstract class IDatabase {
     catch (e){
       cancel();
       print(e.toString());
+      rethrow;
       return false;
     }
   }

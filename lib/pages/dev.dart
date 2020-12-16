@@ -6,6 +6,7 @@ import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ class DevPage extends StatefulWidget {
   _DevPageState createState() => _DevPageState();
 }
 
-class _DevPageState extends State<DevPage> {
+class _DevPageState extends BaseState<DevPage> {
   final IDatabase database;
   final IPersistentDatabase persistentDatabase;
 
@@ -29,8 +30,9 @@ class _DevPageState extends State<DevPage> {
   String bookWordCount = "<empty>";
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Dev Tools".tr()),
       ),

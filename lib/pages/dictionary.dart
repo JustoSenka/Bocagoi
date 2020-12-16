@@ -5,6 +5,7 @@ import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class DictionaryPage extends StatefulWidget {
   }
 }
 
-class _DictionaryPageState extends State<DictionaryPage> {
+class _DictionaryPageState extends BaseState<DictionaryPage> {
   final IDatabase database;
 
   Future<bool> loadDataFuture;
@@ -48,8 +49,9 @@ class _DictionaryPageState extends State<DictionaryPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Dictionary".tr()),
       ),

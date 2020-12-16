@@ -1,4 +1,5 @@
 import 'package:bocagoi/models/abstractions.dart';
+import 'package:bocagoi/services/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:bocagoi/utils/strings.dart';
 
@@ -400,34 +401,37 @@ class DoubleListTile extends StatelessWidget {
   }
 }
 
-class MultiListTile extends StatelessWidget {
-  const MultiListTile({
+class SpacedOutRow extends StatelessWidget {
+  const SpacedOutRow({
     Key key,
+    this.style,
     this.list,
   }) : super(key: key);
 
-  final List<String> list;
+  final List<Widget> list;
+  final TextStyle style;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Row(
-        children: buildList(),
-      ),
+    return Row(
+      children: buildList(),
     );
   }
 
   List<Widget> buildList() {
     var newList = <Widget>[];
-    newList.add(buildText(0));
+    newList.add(list[0]);
 
     for (var i = 1; i < list.length; i++) {
       newList.add(Spacer());
-      newList.add(buildText(i));
+      newList.add(list[i]);
     }
 
     return newList;
   }
-
-  Text buildText(int i) => Text(list[i] ?? "<empty>".tr());
+/*
+  Text buildText(int i) => Text(
+        list[i] ?? "<empty>".tr(),
+        style: style,
+      );*/
 }

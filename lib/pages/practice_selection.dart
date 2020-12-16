@@ -1,4 +1,5 @@
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ class PracticeSelectionPage extends StatefulWidget {
   _PracticeSelectionPageState createState() => _PracticeSelectionPageState();
 }
 
-class _PracticeSelectionPageState extends State<PracticeSelectionPage> {
+class _PracticeSelectionPageState extends BaseState<PracticeSelectionPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   String _selectedBox = "Box1";
@@ -20,8 +21,9 @@ class _PracticeSelectionPageState extends State<PracticeSelectionPage> {
   int _to = 0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Practice".tr()),
       ),

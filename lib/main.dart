@@ -4,6 +4,7 @@ import 'package:bocagoi/services/analytics.dart';
 import 'package:bocagoi/services/authentication.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/logger.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -43,13 +44,16 @@ void main() async {
   Dependencies.add<IPersistentDatabase, PersistentDatabase>(persistentDatabase);
   Dependencies.printDebug();
 
+  Logger.instance = SnackBarLogger();
+
+/*
   FlutterError.onError = (FlutterErrorDetails details) async {
     print(details.exception?.toString());
 
     Zone.current.handleUncaughtError(details.exception, details.stack);
     await FirebaseCrashlytics.instance.recordFlutterError(details);
-  };
-
+  };*/
+  /*
   unawaited(
     () => runZonedGuarded<Future<void>>(() async {
       runApp(MyApp());
@@ -58,6 +62,8 @@ void main() async {
       throw error;
     }),
   );
+*/
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

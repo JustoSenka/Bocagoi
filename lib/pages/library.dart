@@ -6,6 +6,7 @@ import 'package:bocagoi/pages/show_book.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class LibraryPage extends StatefulWidget {
   }
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _LibraryPageState extends BaseState<LibraryPage> {
   final IDatabase database;
 
   Future<Map<int, Book>> books;
@@ -32,8 +33,9 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Library".tr()),
       ),

@@ -7,6 +7,7 @@ import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class ShowBookPage extends StatefulWidget {
   _ShowBookPageState createState() => _ShowBookPageState(book);
 }
 
-class _ShowBookPageState extends State<ShowBookPage> {
+class _ShowBookPageState extends BaseState<ShowBookPage> {
   final IDatabase database;
   final IPersistentDatabase persistentDatabase;
   final IUserPrefs userPrefs;
@@ -41,6 +42,7 @@ class _ShowBookPageState extends State<ShowBookPage> {
   int primaryLangID;
   int foreignLangID;
   int secondaryLangID;
+  Set<int> languageIds;
 
   bool get isThreeColumn => secondaryLangID != null;
 
@@ -51,29 +53,31 @@ class _ShowBookPageState extends State<ShowBookPage> {
     primaryLangID = await prefs.getPrimaryLanguageID();
     foreignLangID = await prefs.getForeignLanguageID();
     secondaryLangID = await prefs.getSecondaryLanguageID();
-    final langsToGet = isThreeColumn
-        ? [primaryLangID, foreignLangID, secondaryLangID]
-        : [primaryLangID, foreignLangID];
+    languageIds = isThreeColumn
+        ? [primaryLangID, foreignLangID, secondaryLangID].toSet()
+        : [primaryLangID, foreignLangID].toSet();
 
     final languageMap = await database.languages.getAll();
-    languages = languageMap.values.where((e) =>
-        langsToGet.contains(e.id)).toList(growable: false);
+    languages = languageMap.values
+        .where((e) => languageIds.contains(e.id))
+        .toList(growable: false);
 
     words =
-    await persistentDatabase.loadAndGroupWords(book, langsToGet.toSet());
+        await persistentDatabase.loadAndGroupWords(book, languageIds);
 
     return words.isNotEmpty;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Book:".tr() + " " + book.name),
       ),
       body: LoadingPageWithProgressIndicator<bool>(
         future: loadWordsFuture,
-        body: buildBookWordListView,
+        body: buildBody,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: addNewWord,
@@ -83,11 +87,35 @@ class _ShowBookPageState extends State<ShowBookPage> {
     );
   }
 
-  Widget buildBookWordListView(bool hasData) {
+  Widget buildBody(bool hasData) {
     if (_bookHasNoWords || !hasData) {
       return buildTextMessage();
     } else {
-      return buildListOfWords(words);
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: Row(
+              children: languages
+                  .map(
+                    (e) => Expanded(
+                      child: Center(
+                        child: Text(
+                          e.name,
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+          Divider(),
+          Expanded(
+            child: buildListOfWords(words),
+          ),
+        ],
+      );
     }
   }
 
@@ -99,17 +127,22 @@ class _ShowBookPageState extends State<ShowBookPage> {
 
   Widget buildListOfWords(Map<int, Map<int, Word>> words) {
     return ListView(
-        children: [
-    MultiListTile(
-    list: languages.values.ma),
-    ),
-    ...words.values.map(
-    (trans) => MultiListTile(
-    list: trans.values.map((e) => e?.text).toList(),
-    ),
-    ),
-    ]
-    ,
+      children: [
+        ...words.values.map(
+          (trans) => Row(
+            children: trans.values.map((e) {
+              final text = e?.text ?? "<empty>";
+              return Expanded(
+                child: ListTile(
+                  title: Center(
+                    child: Text(text),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -117,16 +150,15 @@ class _ShowBookPageState extends State<ShowBookPage> {
     print("Navigating to edit word page: ");
 
     await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (ctx) =>
-            EditWordPage(
+        builder: (ctx) => EditWordPage(
               word: Word(),
               book: book,
             )));
 
-    final newBook = await database.books.get(book.id);
+    // Reload book and words and set state
+    book = await database.books.get(book.id);
+    words =  await persistentDatabase.loadAndGroupWords(book, languageIds);
 
-    setState(() {
-      book = newBook;
-    });
+    setState(() {});
   }
 }

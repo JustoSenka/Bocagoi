@@ -45,7 +45,7 @@ class DatabaseTests {
 
     test("Adding word creates master word automatically", () async {
       await clean();
-      await persistentDatabase.addNewWord(Word());
+      await persistentDatabase.addNewWord(Word(languageID: 1));
 
       final words = await database.words.getAll();
       final masterWords = await database.masterWords.getAll();
@@ -90,8 +90,8 @@ class DatabaseTests {
 
       var book = Book();
       await database.books.add(book);
-      await persistentDatabase.addNewWord(Word(), book: book);
-      await persistentDatabase.addNewWord(Word(), book: book);
+      await persistentDatabase.addNewWord(Word(languageID: 1), book: book);
+      await persistentDatabase.addNewWord(Word(languageID: 1), book: book);
 
       final masters = await database.masterWords.getAll();
       final master1 = masters.values.elementAt(0);
@@ -102,6 +102,59 @@ class DatabaseTests {
 
       expect(book.masterWordsID.contains(master1.id), true);
       expect(book.masterWordsID.contains(master2.id), true);
+    });
+
+    test("Changing word language will update master translations as well",
+        () async {
+      await clean();
+
+      var word = Word(id: 5, languageID: 1);
+      await persistentDatabase.addNewWord(word);
+
+      word.languageID = 2;
+      await persistentDatabase.updateChangesToWord(word);
+
+      final masters = await database.masterWords.getAll();
+      final master = masters.values.first;
+      await master.translationsFuture;
+      final newWord = master.translations[2];
+
+      expect(newWord != null, true);
+      expect(newWord.languageID, 2);
+    });
+
+    test(
+        "Changing word language if master already is translated will put word onto another master word",
+        () async {
+      await clean();
+
+      var word1 = Word(id: 5, languageID: 1);
+      var word2 = Word(id: 6, languageID: 2);
+      await persistentDatabase.addMultipleNewTranslations([word1, word2]);
+
+      word1.languageID = 2;
+      await persistentDatabase.updateChangesToWord(word1);
+
+      final masters = await database.masterWords.getAll();
+      final master1 = masters[1];
+      final master2 = masters[2];
+
+      // updateChangesToWord should create new master
+      expect(master1 != null, true);
+      expect(master2 != null, true);
+
+      final trans1 = await masters[1].translationsFuture;
+      final trans2 = await masters[2].translationsFuture;
+
+      expect(trans1.length, 1);
+      expect(trans2.length, 1);
+      expect(trans2[2].languageID, 2);
+      expect(trans1[2].languageID, 2);
+
+      expect(trans1[2].masterWordID != trans2[2].masterWordID, true);
+
+      expect(trans1[2].id, 6);
+      expect(trans2[2].id, 5);
     });
 
     test("Getting grouped words by language loads all correct words", () async {

@@ -47,6 +47,30 @@ abstract class IObjectProvider<T extends DbObject> {
   Future<List<int>> getNextFreeIDs(int amountOfIds);
 }
 
+class RequiredFieldsNotSetException implements Exception {
+  final DbObject obj;
+  RequiredFieldsNotSetException(this.obj);
+
+  @override
+  String toString() => "Cannot update database objects since required fields are not set, id: ${obj.id}, $obj";
+}
+
+class ObjectAlreadyExistsException implements Exception {
+  final DbObject obj;
+  ObjectAlreadyExistsException(this.obj);
+
+  @override
+  String toString() => "Cannot add object to database with id: ${obj.id} because it already exists: $obj";
+}
+
+class ObjectDoesNotExistException implements Exception {
+  final DbObject obj;
+  ObjectDoesNotExistException(this.obj);
+
+  @override
+  String toString() => "Should not update an object which is not persisted, id: ${obj.id}, $obj";
+}
+
 class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   ObjectProvider({this.path, this.constructor, this.serializer});
 
@@ -55,8 +79,31 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   Map<String, dynamic> Function(T) serializer;
 
   Future<bool> add(T obj) async {
-    obj.id ??= await getNextFreeID();
-    return await update(obj);
+    try {
+      obj.id ??= await getNextFreeID();
+      if (!obj.areRequiredFieldsSet()) {
+        RequiredFieldsNotSetException(obj);
+      }
+
+      var collection = _getCollection(path);
+      var doc = collection.doc(obj.id.toString());
+      var snapshot = await doc.get();
+      if (snapshot.exists) {
+        ObjectAlreadyExistsException(obj);
+      }
+
+      if (_batch == null) {
+        await doc.set(serializer(obj));
+      } else {
+        _batch.set(doc, serializer(obj));
+      }
+
+      return true;
+    } catch (e) {
+      print(e.toString());
+      rethrow;
+      return false;
+    }
   }
 
   Future<bool> delete(int id) async {
@@ -73,6 +120,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       return true;
     } catch (e) {
       print(e.toString());
+      rethrow;
       return false;
     }
   }
@@ -86,6 +134,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       return true;
     } catch (e) {
       print(e.toString());
+      rethrow;
       return false;
     }
   }
@@ -99,6 +148,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       return constructor(data.data());
     } catch (e) {
       print(e.toString());
+      rethrow;
       return null;
     }
   }
@@ -106,7 +156,6 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   Future<Map<int, T>> getMany(List<int> list) async {
     try {
       var collection = _getCollection(path);
-      // var docs = list.map((id) => collection.doc(id.toString()));
 
       if (list.isNotEmpty) {
         var data = await collection.where("id", whereIn: list).get();
@@ -117,6 +166,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       }
     } catch (e) {
       print(e.toString());
+      rethrow;
       return null;
     }
   }
@@ -128,6 +178,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       return map;
     } catch (e) {
       print(e.toString());
+      rethrow;
       return null;
     }
   }
@@ -135,12 +186,11 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   Future<bool> update(T obj) async {
     try {
       if (obj.id == null) {
-        throw Exception("Should not update an object which is not persisted");
+        ObjectDoesNotExistException(obj);
       }
 
       if (!obj.areRequiredFieldsSet()) {
-        throw Exception(
-            "Cannot update database objects since required fields are not set");
+        RequiredFieldsNotSetException(obj);
       }
 
       var collection = _getCollection(path);
@@ -155,6 +205,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
       return true;
     } catch (e) {
       print(e.toString());
+      rethrow;
       return false;
     }
   }
@@ -165,7 +216,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
         snapshot.docs.map<dynamic>((e) => e.data()["id"]).cast<int>().toSet();
 
     var id = 1;
-    while (set.contains(id) && _idsTaken.contains(id)) {
+    while (set.contains(id) || _idsTaken.contains(id)) {
       id++;
     }
 
@@ -185,7 +236,7 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
     final list = <int>[];
     var id = 1;
     for (var i = 0; i < amountOfIds; i++) {
-      while (set.contains(id) && _idsTaken.contains(id)) {
+      while (set.contains(id) || _idsTaken.contains(id)) {
         id++;
       }
       list.add(id);

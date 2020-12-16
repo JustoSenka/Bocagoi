@@ -1,11 +1,10 @@
-import 'dart:collection';
-
 import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/services/authentication.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,7 +17,7 @@ class SettingsPage extends StatefulWidget {
   _SettingsPageState createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends BaseState<SettingsPage> {
   _SettingsPageState()
       : database = Dependencies.get<IDatabase>(),
         userPrefs = Dependencies.get<IUserPrefs>(),
@@ -40,8 +39,9 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<bool> loadSettingsFuture;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       appBar: AppBar(
         title: Text("Settings".tr()),
       ),

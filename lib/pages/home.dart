@@ -4,6 +4,7 @@ import 'package:bocagoi/pages/library.dart';
 import 'package:bocagoi/pages/practice_selection.dart';
 import 'package:bocagoi/pages/settings.dart';
 import 'package:bocagoi/utils/strings.dart';
+import 'package:bocagoi/widgets/base_state.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +16,11 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends BaseState<HomePage> {
   @override
-  Widget build(BuildContext context) {
+  Widget buildScaffold(BuildContext context, GlobalKey<ScaffoldState> key) {
     return Scaffold(
+      key: key,
       drawer: buildDrawer(),
       appBar: AppBar(
         title: Text(Strings.AppTitle),

@@ -47,13 +47,13 @@ class PersistentDatabase extends IPersistentDatabase {
       final master = MasterWord();
       master.id = await database.masterWords.getNextFreeID();
 
-      var ids = await database.words.getNextFreeIDs(words.length);
+      final ids = await database.words.getNextFreeIDs(words.length);
       words.zip(ids).forEach((e) {
-        e.item1.id = e.item2;
+        e.item1.id ??= e.item2;
         e.item1.masterWordID = master.id;
       });
 
-      master.translationsID.addAll(ids);
+      master.translationsID.addAll(words.map((e) => e.id));
 
       await database.masterWords.add(master);
       await Future.wait(words.map((e) async => await database.words.add(e)));
@@ -70,12 +70,13 @@ class PersistentDatabase extends IPersistentDatabase {
   /// Add master to book if provided.
   Future<bool> addNewWord(Word word, {Book book}) async {
     return await database.batchRequests(() async {
-      if (word.languageID == null)
+      if (word.languageID == null){
         throw Exception("Cannot add word with no language set");
+      }
 
       final master = MasterWord();
       master.id = await database.masterWords.getNextFreeID();
-      word.id = await database.words.getNextFreeID();
+      word.id ??= await database.words.getNextFreeID();
 
       master.translationsID.add(word.id);
       word.masterWordID = master.id;
@@ -138,7 +139,7 @@ class PersistentDatabase extends IPersistentDatabase {
 
         final newMaster = MasterWord();
         newMaster.translationsID.add(word.id);
-        await database.masterWords.add(master);
+        await database.masterWords.add(newMaster);
 
         word.masterWordID = newMaster.id;
       }
