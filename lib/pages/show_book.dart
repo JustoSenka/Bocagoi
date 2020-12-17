@@ -1,11 +1,12 @@
 import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/word.dart';
-import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/services/logger.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
+import 'package:bocagoi/utils/common_word_operations.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
@@ -62,8 +63,7 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
         .where((e) => languageIds.contains(e.id))
         .toList(growable: false);
 
-    words =
-        await persistentDatabase.loadAndGroupWords(book, languageIds);
+    words = await persistentDatabase.loadAndGroupWords(book, languageIds);
 
     return words.isNotEmpty;
   }
@@ -80,7 +80,8 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
         body: buildBody,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: addNewWord,
+        onPressed: () => CommonWordOperations.addNewWord(context,
+            book: book, callback: setStateAndUpdateWords),
         tooltip: "Add Word".tr(),
         child: Icon(Icons.add),
       ),
@@ -99,13 +100,10 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
               children: languages
                   .map(
                     (e) => Expanded(
-                      child: Center(
-                        child: Text(
-                          e.name,
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    ),
+                        child: Center(
+                      child: Text(e.name,
+                          style: TextStyle(fontStyle: FontStyle.italic)),
+                    )),
                   )
                   .toList(),
             ),
@@ -137,6 +135,8 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
                   title: Center(
                     child: Text(text),
                   ),
+                  onTap: getOnTapForWord(e),
+                  onLongPress: getOnLongPressForWord(e),
                 ),
               );
             }).toList(),
@@ -146,18 +146,27 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
     );
   }
 
-  void addNewWord() async {
-    print("Navigating to edit word page: ");
+  VoidCallback getOnTapForWord(Word e) {
+    if (e == null) {
+      return () => Logger.log("Translation to this word not found");
+    } else {
+      return () => CommonWordOperations.showWord(context, e);
+    }
+  }
 
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (ctx) => EditWordPage(
-              word: Word(),
-              book: book,
-            )));
+  VoidCallback getOnLongPressForWord(Word e) {
+    if (e == null) {
+      return () => Logger.log("Translation to this word not found");
+    } else {
+      return () => CommonWordOperations.editWord(context, e,
+          book: book, callback: setStateAndUpdateWords);
+    }
+  }
 
+  void setStateAndUpdateWords() async {
     // Reload book and words and set state
     book = await database.books.get(book.id);
-    words =  await persistentDatabase.loadAndGroupWords(book, languageIds);
+    words = await persistentDatabase.loadAndGroupWords(book, languageIds);
 
     setState(() {});
   }

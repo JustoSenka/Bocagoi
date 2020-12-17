@@ -1,31 +1,7 @@
 import 'package:bocagoi/models/abstractions.dart';
-import 'package:bocagoi/services/logger.dart';
+import 'package:bocagoi/widgets/text_html.dart';
 import 'package:flutter/material.dart';
 import 'package:bocagoi/utils/strings.dart';
-
-class BootstrapColors {
-  static const Color primary = Color(0xff007bff);
-  static const Color info = Color(0xff17a2b8);
-  static const Color warning = Color(0xffffc107);
-  static const Color success = Color(0xff28a745);
-
-  static const Color danger = Color(0xffdc3545);
-  static const Color dark = Color(0xff343a40);
-  static const Color secondary = Color(0xff6c757d);
-  static const Color light = Color(0xfff8f9fa);
-}
-
-class FontSize {
-  const FontSize(this.units);
-
-  final double units;
-
-  static const FontSize xbig = FontSize(22);
-  static const FontSize big = FontSize(20);
-  static const FontSize medium = FontSize(18);
-  static const FontSize small = FontSize(16);
-  static const FontSize xsmall = FontSize(14);
-}
 
 class RoundedButton extends StatelessWidget {
   RoundedButton(

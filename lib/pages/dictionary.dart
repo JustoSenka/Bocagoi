@@ -4,6 +4,7 @@ import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
+import 'package:bocagoi/utils/common_word_operations.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
@@ -62,7 +63,8 @@ class _DictionaryPageState extends BaseState<DictionaryPage> {
         textIfNoData: "There are no words created.".tr(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: addNewWord,
+        onPressed: () => CommonWordOperations.addNewWord(context,
+            callback: setStateAndUpdateWords),
         tooltip: "Add Word".tr(),
         child: Icon(Icons.add),
       ),
@@ -90,26 +92,14 @@ class _DictionaryPageState extends BaseState<DictionaryPage> {
             padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
             child: ListTile(
               title: PrimaryText(e.value?.text ?? "<empty>".tr()),
-              onTap: () {},
-              onLongPress: () => editWord(e.value),
+              onTap: () => CommonWordOperations.showWord(context, e.value),
+              onLongPress: () => CommonWordOperations.editWord(context, e.value,
+                  callback: setStateAndUpdateWords),
             ),
           ),
         )
         .toList();
   }
-
-  void editWord(Word word) async {
-    print("Navigating to edit word page: ");
-
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (ctx) => EditWordPage(
-              word: word,
-            )));
-
-    setStateAndUpdateWords();
-  }
-
-  void addNewWord() async => editWord(Word());
 
   void setStateAndUpdateWords() {
     setState(() {
