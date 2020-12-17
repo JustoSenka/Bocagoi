@@ -49,26 +49,32 @@ abstract class IObjectProvider<T extends DbObject> {
 
 class RequiredFieldsNotSetException implements Exception {
   final DbObject obj;
+
   RequiredFieldsNotSetException(this.obj);
 
   @override
-  String toString() => "Cannot update database objects since required fields are not set, id: ${obj.id}, $obj";
+  String toString() =>
+      "Cannot update database objects since required fields are not set, id: ${obj.id}, $obj";
 }
 
 class ObjectAlreadyExistsException implements Exception {
   final DbObject obj;
+
   ObjectAlreadyExistsException(this.obj);
 
   @override
-  String toString() => "Cannot add object to database with id: ${obj.id} because it already exists: $obj";
+  String toString() =>
+      "Cannot add object to database with id: ${obj.id} because it already exists: $obj";
 }
 
 class ObjectDoesNotExistException implements Exception {
   final DbObject obj;
+
   ObjectDoesNotExistException(this.obj);
 
   @override
-  String toString() => "Should not update an object which is not persisted, id: ${obj.id}, $obj";
+  String toString() =>
+      "Should not update an object which is not persisted, id: ${obj.id}, $obj";
 }
 
 class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
@@ -79,135 +85,93 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
   Map<String, dynamic> Function(T) serializer;
 
   Future<bool> add(T obj) async {
-    try {
-      obj.id ??= await getNextFreeID();
-      if (!obj.areRequiredFieldsSet()) {
-        RequiredFieldsNotSetException(obj);
-      }
-
-      var collection = _getCollection(path);
-      var doc = collection.doc(obj.id.toString());
-      var snapshot = await doc.get();
-      if (snapshot.exists) {
-        ObjectAlreadyExistsException(obj);
-      }
-
-      if (_batch == null) {
-        await doc.set(serializer(obj));
-      } else {
-        _batch.set(doc, serializer(obj));
-      }
-
-      return true;
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return false;
+    obj.id ??= await getNextFreeID();
+    if (!obj.areRequiredFieldsSet()) {
+      RequiredFieldsNotSetException(obj);
     }
+
+    var collection = _getCollection(path);
+    var doc = collection.doc(obj.id.toString());
+    var snapshot = await doc.get();
+    if (snapshot.exists) {
+      ObjectAlreadyExistsException(obj);
+    }
+
+    if (_batch == null) {
+      await doc.set(serializer(obj));
+    } else {
+      _batch.set(doc, serializer(obj));
+    }
+
+    return true;
   }
 
   Future<bool> delete(int id) async {
-    try {
-      var collection = _getCollection(path);
-      var doc = collection.doc(id.toString());
+    var collection = _getCollection(path);
+    var doc = collection.doc(id.toString());
 
-      if (_batch == null) {
-        await doc.delete();
-      } else {
-        _batch.delete(doc);
-      }
-
-      return true;
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return false;
+    if (_batch == null) {
+      await doc.delete();
+    } else {
+      _batch.delete(doc);
     }
+
+    return true;
   }
 
   Future<bool> deleteAll() async {
-    try {
-      final map = await getAll();
-      var collection = _getCollection(path);
-      await Future.wait(map.entries
-          .map((e) async => await collection.doc(e.key.toString()).delete()));
-      return true;
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return false;
-    }
+    final map = await getAll();
+    var collection = _getCollection(path);
+    await Future.wait(map.entries
+        .map((e) async => await collection.doc(e.key.toString()).delete()));
+    return true;
   }
 
   Future<T> get(int id) async {
-    try {
-      var collection = _getCollection(path);
-      var doc = collection.doc(id.toString());
+    var collection = _getCollection(path);
+    var doc = collection.doc(id.toString());
 
-      var data = await doc.get();
-      return constructor(data.data());
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return null;
-    }
+    var data = await doc.get();
+    return constructor(data.data());
   }
 
   Future<Map<int, T>> getMany(List<int> list) async {
-    try {
-      var collection = _getCollection(path);
+    var collection = _getCollection(path);
 
-      if (list.isNotEmpty) {
-        var data = await collection.where("id", whereIn: list).get();
-        var map = _produceHashMapFromSnapshot(data, constructor);
-        return map;
-      } else {
-        return HashMap<int, T>();
-      }
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return null;
+    if (list.isNotEmpty) {
+      var data = await collection.where("id", whereIn: list).get();
+      var map = _produceHashMapFromSnapshot(data, constructor);
+      return map;
+    } else {
+      return HashMap<int, T>();
     }
   }
 
   Future<Map<int, T>> getAll() async {
-    try {
-      var snapshot = await _getCollection(path).get();
-      var map = _produceHashMapFromSnapshot(snapshot, constructor);
-      return map;
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return null;
-    }
+    var snapshot = await _getCollection(path).get();
+    var map = _produceHashMapFromSnapshot(snapshot, constructor);
+    return map;
   }
 
   Future<bool> update(T obj) async {
-    try {
-      if (obj.id == null) {
-        ObjectDoesNotExistException(obj);
-      }
-
-      if (!obj.areRequiredFieldsSet()) {
-        RequiredFieldsNotSetException(obj);
-      }
-
-      var collection = _getCollection(path);
-      var doc = collection.doc(obj.id.toString());
-
-      if (_batch == null) {
-        await doc.set(serializer(obj));
-      } else {
-        _batch.set(doc, serializer(obj));
-      }
-
-      return true;
-    } catch (e) {
-      print(e.toString());
-      rethrow;
-      return false;
+    if (obj.id == null) {
+      ObjectDoesNotExistException(obj);
     }
+
+    if (!obj.areRequiredFieldsSet()) {
+      RequiredFieldsNotSetException(obj);
+    }
+
+    var collection = _getCollection(path);
+    var doc = collection.doc(obj.id.toString());
+
+    if (_batch == null) {
+      await doc.set(serializer(obj));
+    } else {
+      _batch.set(doc, serializer(obj));
+    }
+
+    return true;
   }
 
   Future<int> getNextFreeID() async {

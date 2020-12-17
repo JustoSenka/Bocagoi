@@ -79,6 +79,14 @@ class _DevPageState extends BaseState<DevPage> {
             },
           ),
           PrimaryText(bookWordCount, center: true),
+          RoundedButton(
+            text: "Throw exception",
+            onPressed: () => throw Exception("Throw exception"),
+          ),
+          RoundedButton(
+            text: "Throw exception async",
+            onPressed: () async => throw Exception("Throw exception async"),
+          ),
         ],
       ),
     );

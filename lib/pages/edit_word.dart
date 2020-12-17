@@ -146,12 +146,8 @@ class _EditWordPageState extends BaseState<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-              try {
-                await persistentDatabase.updateChangesToWord(wordCopy);
-                Navigator.of(context).pop();
-              } catch (e) {
-                Logger.log("Error: ".tr() + e.toString());
-              }
+              await persistentDatabase.updateChangesToWord(wordCopy);
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -164,13 +160,8 @@ class _EditWordPageState extends BaseState<EditWordPage> {
           SaveButton(
             formKey: _formKey,
             onPressed: () async {
-              try {
-                await persistentDatabase.addNewWord(wordCopy,
-                    book: widget.book);
-                Navigator.of(context).pop();
-              } catch (e) {
-                Logger.log("Error: ".tr() + e.toString());
-              }
+              await persistentDatabase.addNewWord(wordCopy, book: widget.book);
+              Navigator.of(context).pop();
             },
           ),
         ],

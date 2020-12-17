@@ -13,7 +13,7 @@ class Dependencies {
 
   // T -> Interface type
   // K -> Actual class type
-  static void add<TBase, TImpl extends TBase>(TImpl obj){
+  static void add<TBase>(TBase obj){
     _singleInstance.map[typeOf<TBase>()] = obj;
   }
 

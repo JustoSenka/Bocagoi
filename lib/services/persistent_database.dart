@@ -4,8 +4,8 @@ import 'package:bocagoi/models/book.dart';
 import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
+import 'package:bocagoi/services/object_provider.dart';
 import 'package:bocagoi/utils/extensions.dart';
-import 'package:flutter/cupertino.dart';
 
 /// An abstraction layer on IDatabase.
 /// It's purpose is to add/modify data in persistent manner.
@@ -121,9 +121,7 @@ class PersistentDatabase extends IPersistentDatabase {
   /// in the same language. New master will be created if that happens.
   Future<bool> updateChangesToWord(Word word) async {
     if (word.id == null) {
-      final msg = "Should not update an object which is not persisted";
-      print(msg);
-      return false;
+      throw ObjectDoesNotExistException(word);
     }
 
     return await database.batchRequests(() async {

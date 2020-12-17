@@ -16,54 +16,49 @@ import 'package:bocagoi/pages/home.dart';
 import 'package:bocagoi/utils/strings.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  print('-------------------- Running App --------------------');
-
-  final app = await Firebase.initializeApp();
-  print("Firebase app initialize: " + app.name);
-
-  final analytics = Analytics(FirebaseAnalytics());
-  analytics.logAppOpen();
-
-  final auth = Auth();
-  unawaited(() => auth.signIn("glodjus@gmail.com", "somepass").then((user) {
-        print("User connected: " + user.email);
-      }));
-
-  unawaited(
-      () => FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true));
-
-  final database = Database();
-  final prefs = UserPrefs();
-  final persistentDatabase = PersistentDatabase(database);
-
-  Dependencies.add<IAnalytics, Analytics>(analytics);
-  Dependencies.add<IDatabase, Database>(database);
-  Dependencies.add<IUserPrefs, UserPrefs>(prefs);
-  Dependencies.add<IAuth, Auth>(auth);
-  Dependencies.add<IPersistentDatabase, PersistentDatabase>(persistentDatabase);
-  Dependencies.printDebug();
-
-  Logger.instance = SnackBarLogger();
-
-/*
-  FlutterError.onError = (FlutterErrorDetails details) async {
-    print(details.exception?.toString());
-
-    Zone.current.handleUncaughtError(details.exception, details.stack);
-    await FirebaseCrashlytics.instance.recordFlutterError(details);
-  };*/
-  /*
   unawaited(
     () => runZonedGuarded<Future<void>>(() async {
+      WidgetsFlutterBinding.ensureInitialized();
+      print('-------------------- Running App --------------------');
+
+      final app = await Firebase.initializeApp();
+      print("Firebase app initialize: " + app.name);
+
+      final analytics = Analytics(FirebaseAnalytics());
+      analytics.logAppOpen();
+
+      final auth = Auth();
+      unawaited(() => auth.signIn("glodjus@gmail.com", "somepass").then((user) {
+            print("User connected: " + user.email);
+          }));
+
+      unawaited(() =>
+          FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true));
+
+      final database = Database();
+      final persistentDatabase = PersistentDatabase(database);
+
+      Dependencies.add<ILogger>(SnackBarLogger());
+      Dependencies.add<IUserPrefs>(UserPrefs());
+      Dependencies.add<IAnalytics>(analytics);
+      Dependencies.add<IDatabase>(database);
+      Dependencies.add<IAuth>(auth);
+      Dependencies.add<IPersistentDatabase>(
+          persistentDatabase);
+      Dependencies.printDebug();
+
+      FlutterError.onError = (FlutterErrorDetails details) async {
+        // Logger.log(details.exception?.toString());
+        Zone.current.handleUncaughtError(details.exception, details.stack);
+        await FirebaseCrashlytics.instance.recordFlutterError(details);
+      };
+
       runApp(MyApp());
-    }, (error, stackTrace) async {
-      print(error.toString());
+    }, (error, stackTrace) {
+      Logger.log(error.toString());
       throw error;
     }),
   );
-*/
-  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -16,9 +16,7 @@ abstract class IDatabase {
     }
     catch (e){
       cancel();
-      print(e.toString());
       rethrow;
-      return false;
     }
   }
 
@@ -51,8 +49,6 @@ class Database extends IDatabase {
     if (_batch != null) {
       final msg =
           "Cannot start a batch database operation, because the other batch was not commited";
-      print(msg);
-      return;
       throw Exception(msg);
     }
 
@@ -69,7 +65,6 @@ class Database extends IDatabase {
       final msg =
           "Cannot commit batch database operation because batch hasn't started";
       print(msg);
-      return false;
       throw Exception(msg);
     }
 
@@ -80,9 +75,6 @@ class Database extends IDatabase {
       _Languages.commit();
 
       await _batch.commit();
-    } catch (e) {
-      print(e.toString());
-      return false;
     } finally {
       _batch = null;
     }
@@ -92,7 +84,7 @@ class Database extends IDatabase {
 
   void cancel() {
     _batch = null;
-    _Books.commit();
+    _Books.commit(); // for object providers commit just resets the _batch
     _Words.commit();
     _MasterWords.commit();
     _Languages.commit();

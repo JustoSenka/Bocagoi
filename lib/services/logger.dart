@@ -1,3 +1,4 @@
+import 'package:bocagoi/services/dependencies.dart';
 import 'package:flutter/material.dart';
 
 abstract class ILogger {
@@ -8,13 +9,14 @@ abstract class ILogger {
 }
 
 class Logger {
-  static ILogger instance = ConsoleLogger();
+  // static ILogger instance = ConsoleLogger();
+  static ILogger get _instance => Dependencies.get<ILogger>();
 
-  static set context(BuildContext ctx) => instance.context = ctx;
+  static set context(BuildContext ctx) => _instance.context = ctx;
 
-  static set key(GlobalKey<ScaffoldState> newKey) => instance.key = newKey;
+  static set key(GlobalKey<ScaffoldState> newKey) => _instance.key = newKey;
 
-  static void log(String msg) => instance.log(msg);
+  static void log(String msg) => _instance.log(msg);
 }
 
 class SnackBarLogger implements ILogger {
@@ -24,19 +26,12 @@ class SnackBarLogger implements ILogger {
   @override
   void log(String msg) {
     print(msg);
+    final snackbar = SnackBar(content: Text(msg));
 
     if (key != null) {
-      key.currentState.showSnackBar(SnackBar(
-        content: Text(msg),
-      ));
-    }
-
-    if (context != null) {
-      Scaffold.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-        ),
-      );
+      key.currentState.showSnackBar(snackbar);
+    } else if (context != null) {
+      Scaffold.of(context).showSnackBar(snackbar);
     }
   }
 }

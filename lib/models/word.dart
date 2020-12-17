@@ -76,6 +76,7 @@ class Word implements DbObject, IHaveID, IHaveRequiredFields {
     alternateSpelling = w.alternateSpelling;
     article = w.article;
     languageID = w.languageID;
+    masterWordID = w.masterWordID;
   }
 
   @override

@@ -3,20 +3,14 @@ import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
-import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'utils/utils.dart';
 
 IDatabase database;
 IPersistentDatabase persistentDatabase;
 
 class DatabaseTests {
   Future<void> run() async {
-    database = TestDatabase();
-    persistentDatabase = PersistentDatabase(database);
-    Dependencies.add<IDatabase, IDatabase>(database);
 
     Future clean() async {
       await database.words.deleteAll();
