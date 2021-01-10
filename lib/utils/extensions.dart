@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'package:bocagoi/models/abstractions.dart';
 
 extension MapIntExtension<T> on Map<int, T> {
-
   Map<String, T> stringify() {
     return map((key, value) => MapEntry(key.toString(), value));
   }
@@ -25,6 +24,22 @@ extension SetIntExtension on Set<int> {
   Set<int> ConvertAndReplaceWithListInt(dynamic anotherList) {
     return ((anotherList as List<dynamic>)?.cast<int>()?.toSet() ?? this) ??
         Set<int>();
+  }
+
+  void replace(int valueToReplace, int newValue) {
+    if (contains(newValue)) throw StateError("New value already in set");
+
+    var counter = 0;
+    while (counter < length) {
+      var element = first;
+      remove(element);
+      if (element == valueToReplace) {
+        element = newValue;
+      }
+
+      counter++;
+      add(element);
+    }
   }
 }
 
@@ -54,12 +69,10 @@ extension Maps<E, T> on Map<E, List<T>> {
   Map<E, Map<E, T>> innerGroupBy(E Function(T t) key) {
     final map = HashMap<E, Map<E, T>>();
     forEach((id, value) {
-      map[id] =
-          HashMap.fromEntries(value.map((e) => MapEntry(key(e), e)));
+      map[id] = HashMap.fromEntries(value.map((e) => MapEntry(key(e), e)));
     });
     return map;
   }
 }
-
 
 Type typeOf<T>() => T;

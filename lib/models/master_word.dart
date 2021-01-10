@@ -27,6 +27,10 @@ class MasterWord implements DbObject, IHaveID, IHaveRequiredFields {
       MasterWord.fromJson(json);
 
   MasterWord.fromJson(Map<String, dynamic> json) {
+    if (json == null){
+      throw Exception("Cannot deserialize master word because map was empty");
+    }
+
     id = json["id"] as int;
     translationsID =
         translationsID.ConvertAndReplaceWithListInt(json["translationsID"]);

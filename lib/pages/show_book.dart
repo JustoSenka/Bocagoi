@@ -163,11 +163,13 @@ class _ShowBookPageState extends BaseState<ShowBookPage> {
     }
   }
 
-  void setStateAndUpdateWords() async {
-    // Reload book and words and set state
-    book = await database.books.get(book.id);
-    words = await persistentDatabase.loadAndGroupWords(book, languageIds);
+  void setStateAndUpdateWords(bool didWordChange) async {
+    if (didWordChange ?? false) {
+      // Reload book and words and set state
+      book = await database.books.get(book.id);
+      words = await persistentDatabase.loadAndGroupWords(book, languageIds);
 
-    setState(() {});
+      setState(() {});
+    }
   }
 }

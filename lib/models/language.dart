@@ -9,6 +9,10 @@ class Language implements DbObject, IHaveID, IHaveRequiredFields {
   static Language fromMap(Map<String, dynamic> json) => Language.fromJson(json);
 
   Language.fromJson(Map<String, dynamic> json) {
+    if (json == null){
+      throw Exception("Cannot deserialize language because map was empty");
+    }
+
     id = json["id"] as int;
     name = json["name"] as String;
   }

@@ -132,7 +132,8 @@ class ObjectProvider<T extends DbObject> extends IObjectProvider<T> {
     var doc = collection.doc(id.toString());
 
     var data = await doc.get();
-    return constructor(data.data());
+
+    return (data.exists) ? constructor(data.data()) : null;
   }
 
   Future<Map<int, T>> getMany(List<int> list) async {

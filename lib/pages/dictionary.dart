@@ -1,7 +1,6 @@
 import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/master_word.dart';
 import 'package:bocagoi/models/word.dart';
-import 'package:bocagoi/pages/edit_word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/utils/common_word_operations.dart';
@@ -63,8 +62,8 @@ class _DictionaryPageState extends BaseState<DictionaryPage> {
         textIfNoData: "There are no words created.".tr(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => CommonWordOperations.addNewWord(context,
-            callback: setStateAndUpdateWords),
+        onPressed: () =>
+            CommonWordOperations.addNewWord(context, callback: shouldUpdate),
         tooltip: "Add Word".tr(),
         child: Icon(Icons.add),
       ),
@@ -86,25 +85,28 @@ class _DictionaryPageState extends BaseState<DictionaryPage> {
   }
 
   List<Padding> buildListEntries() {
-    return words.entries
+    return words.values
         .map(
           (e) => Padding(
             padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
             child: ListTile(
-              title: PrimaryText(e.value?.text ?? "<empty>".tr()),
-              onTap: () => CommonWordOperations.showWord(context, e.value),
-              onLongPress: () => CommonWordOperations.editWord(context, e.value,
-                  callback: setStateAndUpdateWords),
+              title: PrimaryText(e.text ?? "<empty>".tr()),
+              onTap: () => CommonWordOperations.showWord(context, e,
+                  callback: shouldUpdate),
+              onLongPress: () => CommonWordOperations.editWord(context, e,
+                  callback: shouldUpdate),
             ),
           ),
         )
         .toList();
   }
 
-  void setStateAndUpdateWords() {
-    setState(() {
-      print("Dictionary: Setting state");
-      loadDataFuture = reloadWords();
-    });
+  void shouldUpdate(bool didWordsChange) {
+    if (didWordsChange ?? false) {
+      setState(() {
+        print("Dictionary: Setting state");
+        loadDataFuture = reloadWords();
+      });
+    }
   }
 }

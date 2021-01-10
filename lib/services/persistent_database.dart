@@ -14,6 +14,8 @@ import 'package:bocagoi/utils/extensions.dart';
 /// Some operations might be illegal as well if persistence does not allow it.
 /// While IDatabase will forcefully delete/create everything what's requested.
 abstract class IPersistentDatabase {
+  Future<bool> linkWordToExistingTranslation(Word word, Word translation);
+
   Future<bool> addMultipleNewTranslations(List<Word> words, {Book book});
 
   Future addNewWord(Word word, {Book book});
@@ -31,6 +33,69 @@ class PersistentDatabase extends IPersistentDatabase {
 
   final IDatabase database;
 
+  /// Merges both master words
+  /// Keeps the one master which has most translations
+  /// Updates all books to link to new master
+  /// If book links to both original word and translation, remove translation
+  Future<bool> linkWordToExistingTranslation(
+      Word word, Word translation) async {
+    if (word.id == null || translation.id == null) {
+      final msg = "Cannot link words which are not persisted. "
+          "Word ID: ${word.id}, Translation ID: ${translation.id}";
+      throw Exception(msg);
+    }
+
+    final masterA = await word.masterWordFuture;
+    final masterB = await translation.masterWordFuture;
+
+    final translationsA = await masterA.translationsFuture;
+    final translationsB = await masterB.translationsFuture;
+
+    final set = HashSet<int>();
+    set.addAll(translationsA.entries.map((e) => e.key));
+    set.addAll(translationsB.entries.map((e) => e.key));
+    if (set.length < translationsA.length + translationsB.length) {
+      final msg = "Cannot link word to translation since it is already "
+          "translated via different language. Create new word or remove "
+          "translation to other language if it's incorrect";
+      throw Exception(msg);
+    }
+
+    return await database.batchRequests(() async {
+      final isABigger = translationsA.length >= translationsB.length;
+      final masterToKeep = isABigger ? masterA : masterB;
+      final masterToDestroy = isABigger ? masterB : masterA;
+
+      // Move words from one master to another
+      masterToKeep.translationsID.addAll(masterToDestroy.translationsID);
+
+      masterToDestroy.translations.values
+          .forEach((word) => word.masterWordID = masterToKeep.id);
+
+      await Future.wait(
+          masterToDestroy.translations.values.map(database.words.update));
+      await database.masterWords.update(masterToKeep);
+
+      final books = await database.books.getAll();
+
+      // Replace master word ids in all books
+      books.values.forEach((book) {
+        if (book.masterWordsID.contains(masterToDestroy.id)) {
+          if (!book.masterWordsID.contains(masterToKeep.id)) {
+            // If book contains id of destroyed master,, replace it with new correct one
+            book.masterWordsID.replace(masterToDestroy.id, masterToKeep.id);
+          } else {
+            // If book contains both ids of destroyed and of kept master, remove one
+            book.masterWordsID.remove(masterToDestroy.id);
+          }
+        }
+      });
+
+      // Delete old master
+      await database.masterWords.delete(masterToDestroy.id);
+    });
+  }
+
   /// Creates new master.
   /// Creates new words and links to master.
   /// Add master to book if provided.
@@ -39,8 +104,7 @@ class PersistentDatabase extends IPersistentDatabase {
     if (langsSet.length != words.length) {
       final msg =
           "Cannot add multiple translations to same master word if some have the same language id";
-      print(msg);
-      return false;
+      throw Exception(msg);
     }
 
     return await database.batchRequests(() async {
@@ -70,7 +134,7 @@ class PersistentDatabase extends IPersistentDatabase {
   /// Add master to book if provided.
   Future<bool> addNewWord(Word word, {Book book}) async {
     return await database.batchRequests(() async {
-      if (word.languageID == null){
+      if (word.languageID == null) {
         throw Exception("Cannot add word with no language set");
       }
 

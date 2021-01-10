@@ -3,7 +3,6 @@ import 'package:bocagoi/models/language.dart';
 import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
-import 'package:bocagoi/services/logger.dart';
 import 'package:bocagoi/services/persistent_database.dart';
 import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/strings.dart';
@@ -138,7 +137,7 @@ class _EditWordPageState extends BaseState<EditWordPage> {
           DeleteButton(
             onPressed: () async {
               await persistentDatabase.deleteWord(widget.word);
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             },
           ),
           Spacer(),
@@ -147,7 +146,7 @@ class _EditWordPageState extends BaseState<EditWordPage> {
             formKey: _formKey,
             onPressed: () async {
               await persistentDatabase.updateChangesToWord(wordCopy);
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             },
           ),
         ],
@@ -161,7 +160,7 @@ class _EditWordPageState extends BaseState<EditWordPage> {
             formKey: _formKey,
             onPressed: () async {
               await persistentDatabase.addNewWord(wordCopy, book: widget.book);
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             },
           ),
         ],

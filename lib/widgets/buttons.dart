@@ -63,7 +63,7 @@ class CancelButton extends StatelessWidget {
     return RoundedButton(
       text: "Cancel".tr(),
       color: BootstrapColors.dark,
-      onPressed: () => Navigator.of(context).pop(),
+      onPressed: () => Navigator.of(context).pop(false),
     );
   }
 }

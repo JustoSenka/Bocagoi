@@ -5,11 +5,11 @@ import 'package:bocagoi/models/word.dart';
 import 'package:bocagoi/services/database.dart';
 import 'package:bocagoi/services/dependencies.dart';
 import 'package:bocagoi/services/persistent_database.dart';
-import 'package:bocagoi/services/user_prefs.dart';
 import 'package:bocagoi/utils/common_word_operations.dart';
 import 'package:bocagoi/utils/strings.dart';
 import 'package:bocagoi/widgets/base_state.dart';
 import 'package:bocagoi/widgets/buttons.dart';
+import 'package:bocagoi/widgets/searcheable_dropdown.dart';
 import 'package:bocagoi/widgets/text_html.dart';
 import 'package:flutter/material.dart';
 
@@ -25,9 +25,11 @@ class ShowWordPage extends StatefulWidget {
 
 class _ShowWordPageState extends BaseState<ShowWordPage> {
   _ShowWordPageState({@required this.word})
-      : database = Dependencies.get<IDatabase>();
+      : database = Dependencies.get<IDatabase>(),
+        persistentDatabase = Dependencies.get<IPersistentDatabase>();
 
   final IDatabase database;
+  final IPersistentDatabase persistentDatabase;
 
   @override
   void initState() {
@@ -38,6 +40,8 @@ class _ShowWordPageState extends BaseState<ShowWordPage> {
   Word word;
   MasterWord master;
   Map<int, Word> translations;
+  Map<int, Word> wordsToLinkTo;
+  Map<int, Language> languages;
 
   Future<bool> loadDataFuture;
 
@@ -45,6 +49,13 @@ class _ShowWordPageState extends BaseState<ShowWordPage> {
     await word.languageFuture;
     master = await word.masterWordFuture;
     translations = await master.translationsFuture;
+
+    // TODO: Might be slow to redo this after every modification
+    final words = await database.words.getAll();
+    wordsToLinkTo = Map<int, Word>.fromEntries(words.entries
+        .where((e) => !translations.containsKey(e.value.languageID)));
+
+    languages = await database.languages.getAll();
     return true;
   }
 
@@ -108,12 +119,10 @@ class _ShowWordPageState extends BaseState<ShowWordPage> {
                   Class.paddingTopSmall
                 ]),
               Divider(),
-              ExpansionTile(
-                title: TextHtml("Translations: ${translations.length - 1}",
-                    classes: [Class.small]),
-                children: <Widget>[],
-              ),
-
+              // Shows translations to other languages
+              buildTranslationExpansionTile(),
+              // Links words to different other languages
+              buildSearchableDropdown(),
             ],
           ),
         ),
@@ -121,9 +130,57 @@ class _ShowWordPageState extends BaseState<ShowWordPage> {
     );
   }
 
-  void reloadWord() async {
-    word = await database.words.get(word.id);
-    await loadData();
-    setState(() {});
+  /// Widget which shows translations this word is translated to
+  Widget buildTranslationExpansionTile() {
+    return ExpansionTile(
+      title: TextHtml("Translations: ${translations.length - 1}",
+          classes: [Class.small]),
+      children: translations.values.where((e) => e.id != word.id).map((e) {
+        return ListTile(
+          title: PrimaryText(e?.text ?? "<empty>"),
+          trailing: SecondaryText(languages[e?.languageID ?? 1].name),
+          onTap: () async {
+            CommonWordOperations.showWord(context, e);
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  /// Widget which can link displayed word to words in other languages
+  Widget buildSearchableDropdown() {
+    return SearchableDropdown(
+      text: TextHtml(
+        "Link to existing translation",
+        color: Colors.grey.shade700,
+      ),
+      listViewItemBuilder: (index) {
+        return ListTile(
+          title: PrimaryText(wordsToLinkTo[index]?.text ?? "<empty $index>"),
+          trailing: SecondaryText(
+              languages[wordsToLinkTo[index]?.languageID ?? 1].name),
+          onTap: () async {
+            final wordToLinkTo = wordsToLinkTo[index];
+            await persistentDatabase.linkWordToExistingTranslation(
+                word, wordToLinkTo);
+            Navigator.pop(context);
+          },
+        );
+      },
+      itemCount: wordsToLinkTo.length,
+      itemTextContentGetter: (index) => wordsToLinkTo[index]?.text ?? "",
+    );
+  }
+
+  void reloadWord(bool didWordChange) async {
+    if (didWordChange ?? false) {
+      word = await database.words.get(word.id);
+      if (word == null){ // Word was deleted, return back to caller
+        Navigator.pop(context, true);
+      }
+
+      await loadData();
+      setState(() {});
+    }
   }
 }

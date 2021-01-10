@@ -57,11 +57,12 @@ enum Class {
 }
 
 class TextHtml extends StatelessWidget {
-  TextHtml(this.text, {List<Class> classes, Key key})
+  TextHtml(this.text, {this.color, List<Class> classes, Key key})
       : classes = classes?.toSet() ?? Set(),
         super(key: key);
 
   final String text;
+  final Color color;
   final Set<Class> classes;
 
   @override
@@ -78,6 +79,7 @@ class TextHtml extends StatelessWidget {
       text,
       maxLines: lines,
       style: TextStyle(
+        color: color,
         fontStyle: fontStyle,
         fontFamily: fontFamily,
         fontSize: fontSize,

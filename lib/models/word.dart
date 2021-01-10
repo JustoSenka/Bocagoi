@@ -43,6 +43,10 @@ class Word implements DbObject, IHaveID, IHaveRequiredFields {
   static Word fromMap(Map<String, dynamic> json) => Word.fromJson(json);
 
   Word.fromJson(Map<String, dynamic> json) {
+    if (json == null){
+      throw Exception("Cannot deserialize word because map was empty");
+    }
+
     id = json["id"] as int;
     text = json["text"] as String;
     description = json["description"] as String;

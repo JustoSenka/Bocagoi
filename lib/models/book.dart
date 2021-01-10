@@ -25,6 +25,10 @@ class Book implements DbObject, IHaveID, IHaveRequiredFields {
   static Book fromMap(Map<String, dynamic> json) => Book.fromJson(json);
 
   Book.fromJson(Map<String, dynamic> json) {
+    if (json == null){
+      throw Exception("Cannot deserialize book because map was empty");
+    }
+
     id = json["id"] as int;
     name = json["name"] as String;
     description = json["description"] as String;
